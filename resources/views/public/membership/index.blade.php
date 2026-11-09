@@ -1,0 +1,119 @@
+@extends('layouts.public')
+
+@section('content')
+<section style="position: relative; overflow: hidden; padding-block: clamp(56px, 7vw, 104px);">
+    <svg aria-hidden="true" viewBox="0 0 1440 600" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: .14;" fill="none" stroke="#C9A961" stroke-width="1.2">
+        <path d="M-20 360 C 240 290, 460 460, 720 380 S 1180 280, 1460 380"></path>
+        <path d="M-20 410 C 240 340, 460 510, 720 430 S 1180 330, 1460 430"></path>
+        <path d="M-20 460 C 240 390, 460 560, 720 480 S 1180 380, 1460 480"></path>
+    </svg>
+    <div class="container-x" style="position: relative;">
+        <p class="eyebrow" style="color: var(--gold-500);">Membership</p>
+        <h1 style="font-size: clamp(38px, 5vw, 62px); margin: 18px 0 22px; max-width: 820px;" class="text-balance">
+            Joined by <em style="color: var(--champagne-200);">introduction</em>, kept by belonging.
+        </h1>
+        <p style="font-size: 19px; color: var(--mist-300); max-width: 640px; margin-bottom: 32px;">
+            Choose a category, nominate two sponsoring members and meet the committee. Membership fees sit outside the scope of VAT.
+        </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+            <a href="{{ route('account.applications.create') }}" class="btn btn-gold">Begin your application</a>
+            <a href="{{ route('faq') }}" class="btn btn-line">Read the FAQ</a>
+        </div>
+    </div>
+</section>
+
+<section style="background: var(--ivory-100); color: var(--ink-900); padding-block: clamp(56px, 7vw, 88px);">
+    <div class="container-x">
+        <p class="eyebrow" style="color: var(--claret-700);">Categories</p>
+        <h2 style="font-size: clamp(30px, 3.8vw, 44px); margin: 14px 0 16px;">Choose how you belong</h2>
+        <p style="color: var(--slate-600); max-width: 620px; margin-bottom: 40px;">
+            Category fees are published below. Entrance and annual fees are shown inclusive of any applicable charges; membership is not subject to VAT.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+            @forelse ($categories as $category)
+                <article class="card-light" style="display: flex; flex-direction: column;">
+                    <h3 style="font-size: 28px;">{{ $category->name }}</h3>
+                    <p style="margin: 10px 0 20px; color: var(--slate-600);">{{ $category->description }}</p>
+
+                    <dl style="display: grid; gap: 10px; margin-bottom: 20px; font-size: 16px;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #E0D5B8; padding-bottom: 8px;">
+                            <dt>Entrance fee</dt>
+                            <dd style="margin: 0; font-weight: 600;">£{{ number_format($category->entrance_fee / 100, 2) }}</dd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #E0D5B8; padding-bottom: 8px;">
+                            <dt>Annual fee</dt>
+                            <dd style="margin: 0; font-weight: 600;">£{{ number_format($category->annual_fee / 100, 2) }}</dd>
+                        </div>
+                        @if ($category->monthlyAvailable())
+                            <div style="display: flex; justify-content: space-between;">
+                                <dt>Or monthly</dt>
+                                <dd style="margin: 0; font-weight: 600;">£{{ number_format($category->monthly_fee / 100, 2) }}</dd>
+                            </div>
+                        @endif
+                    </dl>
+
+                    @if ($category->benefits)
+                        <ul style="margin: 0 0 24px 1.1rem; padding: 0; color: var(--slate-600);">
+                            @foreach ($category->benefits as $benefit)
+                                <li style="margin-bottom: 6px;">{{ $benefit }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    <p style="font-size: 14px; color: var(--slate-600); margin-bottom: 16px;">
+                        Minimum {{ $category->min_sections }} sections.
+                        @if ($category->sections->isNotEmpty())
+                            Includes {{ $category->sections->pluck('name')->join(', ') }}.
+                        @endif
+                    </p>
+
+                    <a href="{{ route('account.applications.create') }}" class="btn btn-navy btn-sm" style="margin-top: auto; justify-self: start;">Apply for {{ $category->name }}</a>
+                </article>
+            @empty
+                <div class="card-light">
+                    <p>Membership categories are being confirmed. Please <a href="{{ route('contact') }}" class="link-claret">contact the club</a> for current fees.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</section>
+
+<section style="padding-block: clamp(56px, 7vw, 88px);">
+    <div class="container-x">
+        <p class="eyebrow" style="color: var(--gold-500);">Sections</p>
+        <h2 style="font-size: clamp(30px, 3.8vw, 44px); margin: 14px 0 16px;">Find your section</h2>
+        <p style="color: var(--mist-300); max-width: 620px; margin-bottom: 40px;">Sections carry their own annual fee and are chosen alongside your membership category.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+            @forelse ($sections as $section)
+                <article class="card-dark">
+                    <h3 style="font-size: 24px;">{{ $section->name }}</h3>
+                    <p style="margin: 8px 0 16px; color: var(--mist-300);">{{ $section->description }}</p>
+                    <p style="font-weight: 600; color: var(--champagne-200);">£{{ number_format($section->fee / 100, 2) }}{{ $section->recurring_annually ? ' / year' : '' }}</p>
+                    <a href="{{ route('membership.section', $section->slug) }}" class="link-gold" style="display: inline-block; margin-top: 16px;">About this section</a>
+                </article>
+            @empty
+                <div class="card-dark"><p style="color: var(--mist-300);">Sections are being confirmed for the coming year.</p></div>
+            @endforelse
+        </div>
+    </div>
+</section>
+
+<section style="background: var(--navy-800); padding-block: 64px;">
+    <div class="container-x" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px;">
+        @foreach ([
+            ['1', 'Apply online', 'Choose your category and at least two sections.'],
+            ['2', 'Nominate sponsors', 'Two members of three years or more confirm your nomination.'],
+            ['3', 'Meet the committee', 'A short, informal interview at the club.'],
+            ['4', 'Welcome', 'Pay your fees and your membership begins.'],
+        ] as [$number, $title, $copy])
+            <div>
+                <p style="font-family: var(--font-display); font-size: 40px; color: var(--gold-500); line-height: 1;">{{ $number }}</p>
+                <h3 style="font-size: 22px; margin: 12px 0 8px;">{{ $title }}</h3>
+                <p style="color: var(--mist-300);">{{ $copy }}</p>
+            </div>
+        @endforeach
+    </div>
+</section>
+@endsection
