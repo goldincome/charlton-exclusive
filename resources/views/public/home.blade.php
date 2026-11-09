@@ -51,7 +51,7 @@
                 Dine, gather and belong. Charlton Exclusive Club is a members’ club with private dining, sports sections, events and elegant meeting rooms, open to guests by request.
             </p>
             <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-                <a href="{{ route('account.applications.create') }}" class="btn btn-gold">Request an invitation</a>
+                <a href="{{ route('account.applications.start') }}" class="btn btn-gold">Request an invitation</a>
                 <a href="{{ route('rooms.index') }}" class="btn btn-line">Hire a room</a>
             </div>
             <p style="font-size: 14px; color: var(--mist-300); margin-top: 28px;">Members enjoy preferred rates on every booking.</p>
@@ -130,25 +130,25 @@
                 Joined by <em style="color: var(--champagne-200);">introduction</em>
             </h2>
             <p style="color: var(--mist-300); margin-bottom: 32px;">
-                Membership is by application, supported by two sponsoring members and a short interview with our committee.
+                Membership is by application — apply online or at the office, then choose monthly or yearly billing with no entrance fee.
             </p>
 
             <ol style="margin: 0 0 36px; padding: 0; list-style: none; display: grid; gap: 20px;">
                 <li style="display: flex; gap: 16px;">
                     <span style="font-family: var(--font-display); font-size: 28px; color: var(--gold-500); min-width: 36px;">1</span>
-                    <span><strong style="color: var(--ivory-100);">Apply</strong><br><span style="color: var(--mist-300);">Choose your category and at least two sections.</span></span>
+                    <span><strong style="color: var(--ivory-100);">Apply</strong><br><span style="color: var(--mist-300);">Choose your plan online or download the application form and bring it to the office.</span></span>
                 </li>
                 <li style="display: flex; gap: 16px;">
                     <span style="font-family: var(--font-display); font-size: 28px; color: var(--gold-500); min-width: 36px;">2</span>
-                    <span><strong style="color: var(--ivory-100);">Be sponsored</strong><br><span style="color: var(--mist-300);">Two members who have belonged for three years or more confirm your nomination.</span></span>
+                    <span><strong style="color: var(--ivory-100);">Verify &amp; pay</strong><br><span style="color: var(--mist-300);">Bring an accepted ID to the office; an administrator verifies your documents and emails your payment link.</span></span>
                 </li>
                 <li style="display: flex; gap: 16px;">
                     <span style="font-family: var(--font-display); font-size: 28px; color: var(--gold-500); min-width: 36px;">3</span>
-                    <span><strong style="color: var(--ivory-100);">Meet the committee</strong><br><span style="color: var(--mist-300);">A relaxed interview, then your welcome.</span></span>
+                    <span><strong style="color: var(--ivory-100);">Join</strong><br><span style="color: var(--mist-300);">Pay monthly or yearly online and start enjoying members-only access and yearly discounts.</span></span>
                 </li>
             </ol>
 
-            <a href="{{ route('account.applications.create') }}" class="btn btn-gold">Request an invitation</a>
+            <a href="{{ route('account.applications.start') }}" class="btn btn-gold">Request an invitation</a>
         </div>
 
         <div style="flex: 1 1 440px; display: grid; gap: 20px; align-content: start;">
@@ -158,11 +158,8 @@
                         <h3 style="font-size: 26px; color: var(--ivory-100);">{{ $category->name }}</h3>
                         <p style="margin-top: 6px; color: var(--mist-300);">
                             {{ $category->description ?: 'A place at the club on your terms.' }}
-                            @if ($category->entrance_fee)
-                                Entrance £{{ number_format($category->entrance_fee / 100, 0) }},
-                                annual £{{ number_format($category->annual_fee / 100, 0) }}
-                                @if ($category->monthlyAvailable()) or monthly £{{ number_format($category->monthly_fee / 100, 2) }} @endif.
-                            @endif
+                            Entrance fee: none — annual £{{ number_format($category->annual_fee / 100, 0) }}
+                            @if ($category->monthlyAvailable()) or monthly £{{ number_format($category->monthly_fee / 100, 0) }} @endif.
                         </p>
                     </div>
                     <a href="{{ route('membership.apply') }}" class="link-gold">Apply</a>
@@ -279,7 +276,7 @@
                         </p>
                         <h3 style="font-size: 24px; margin: 10px 0 8px; color: var(--ivory-100);">{{ $event->name }}</h3>
                         <p style="margin-bottom: 16px; color: var(--mist-300);">
-                            £{{ number_format($event->price_per_ticket / 100, 2) }} · Members £{{ number_format(($pricing->applyDiscount($event->price_per_ticket, $event->member_discount_type, (float) $event->member_discount_value)) / 100, 2) }}
+                            £{{ number_format($event->price_per_ticket / 100, 2) }} · Members £{{ number_format(($pricing->applyDiscount((int) $event->price_per_ticket, (string) $event->member_discount_type, (int) $event->member_discount_value)) / 100, 2) }}
                         </p>
                         <a href="{{ route('book.event', $event) }}" class="link-gold" style="margin-top: auto;">Request a place</a>
                     </div>
@@ -362,7 +359,7 @@
     <div class="container-x">
         <h2 style="font-size: clamp(30px, 4vw, 42px);">Ready to belong?</h2>
         <p style="margin: 12px auto 28px; max-width: 520px;">Begin your application in a few minutes. We will guide you through every step.</p>
-        <a href="{{ route('account.applications.create') }}" class="btn btn-navy">Request an invitation</a>
+        <a href="{{ route('account.applications.start') }}" class="btn btn-navy">Start your application</a>
     </div>
 </section>
 

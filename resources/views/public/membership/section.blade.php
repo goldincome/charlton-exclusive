@@ -8,8 +8,8 @@
         <p style="font-size: 18px; color: var(--mist-300); margin-bottom: 32px;">{{ $section->description }}</p>
 
         <div class="card-dark">
-            <p style="font-family: var(--font-display); font-size: 40px; color: var(--champagne-200);">£{{ number_format($section->fee / 100, 2) }}</p>
-            <p style="color: var(--mist-300); margin-bottom: 8px;">{{ $section->recurring_annually ? 'Annual section fee' : 'One-off section fee' }} · outside the scope of VAT</p>
+            <p style="font-family: var(--font-display); font-size: 28px; color: var(--champagne-200);">{{ $section->access_type === 'open' ? 'Open to members and non-members' : 'Members only' }}</p>
+            <p style="color: var(--mist-300); margin-bottom: 8px;">@if($section->access_type === 'open') Anyone can order this service. @else Membership plan discounts are calculated and applied each time you use this section. @endif</p>
         </div>
 
         @if ($categories->isNotEmpty())
@@ -21,7 +21,7 @@
                             <h3 style="font-size: 22px;">{{ $category->name }}</h3>
                             <p style="color: var(--mist-300);">£{{ number_format($category->annual_fee / 100, 2) }} / year</p>
                         </div>
-                        <a href="{{ route('account.applications.create') }}" class="link-gold">Apply</a>
+                        <a href="{{ route('account.applications.start') }}" class="link-gold">Apply</a>
                     </div>
                 @endforeach
             </div>

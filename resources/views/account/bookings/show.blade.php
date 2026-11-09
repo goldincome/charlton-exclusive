@@ -89,8 +89,19 @@
                 <p style="font-size: 28px; font-family: var(--font-display); color: var(--claret-700); margin: 0;">
                     £{{ number_format($booking->price_locked / 100, 2) }}
                 </p>
-                @if ($booking->discount_applied)
-                    <p style="font-size: 13px; color: var(--slate-600); margin-top: 8px;">Member discount applied: {{ $booking->discount_applied }}%</p>
+                @if (($booking->discount_amount ?? 0) > 0 || ($booking->discount_applied ?? 0) > 0)
+                    <p style="font-size: 13px; color: var(--slate-600); margin-top: 8px;">
+                        Member discount applied:
+                        @if (($booking->discount_amount ?? 0) > 0 && $booking->discount_type === 'fixed')
+                            £{{ number_format($booking->discount_amount / 100, 2) }} off
+                        @elseif (($booking->discount_amount ?? 0) > 0 && $booking->discount_type === 'percent')
+                            {{ (int) ($booking->discount_value ?? 0) }}% (saved £{{ number_format($booking->discount_amount / 100, 2) }})
+                        @elseif ($booking->discount_type === 'percent')
+                            {{ rtrim(rtrim(number_format((float) $booking->discount_applied, 2), '0'), '.') }}%
+                        @else
+                            £{{ number_format((float) $booking->discount_applied, 2) }} off
+                        @endif
+                    </p>
                 @endif
             </div>
         @endif

@@ -113,9 +113,25 @@ class User extends Authenticatable
         return $profile->is_financial;
     }
 
-    public function canGetMemberRates(): bool
+    /**
+     * Active, financial members may use members-only sections and member bookings.
+     */
+    public function hasMemberAccess(): bool
     {
         return $this->isMember() && $this->isFinancial();
+    }
+
+    /**
+     * Only members paying yearly receive member discounts/rates.
+     */
+    public function isAnnualMember(): bool
+    {
+        return $this->hasMemberAccess() && $this->membership?->billing_frequency === Membership::ANNUAL;
+    }
+
+    public function canGetMemberRates(): bool
+    {
+        return $this->isAnnualMember();
     }
 
     public function sponsorCap(): int

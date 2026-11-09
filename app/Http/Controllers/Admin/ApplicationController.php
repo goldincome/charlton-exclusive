@@ -9,6 +9,7 @@ use App\Services\MembershipService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
 {
@@ -20,15 +21,18 @@ class ApplicationController extends Controller
     {
         return view('admin.applications.index', [
             'applications' => Application::query()
-                ->with(['user', 'category', 'sponsorships.sponsor'])
+                ->with(['user', 'plan', 'category'])
                 ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
                 ->latest()
                 ->paginate(20)
                 ->withQueryString(),
             'statuses' => [
-                Application::SUBMITTED, Application::AWAITING_SPONSORS, Application::UNDER_REVIEW,
-                Application::INTERVIEW_SCHEDULED, Application::INTERVIEW_COMPLETED,
-                Application::FEES_NOTIFIED, Application::ACTIVE, Application::REJECTED,
+                Application::SUBMITTED,
+                Application::FEES_NOTIFIED,
+                Application::ACTIVE,
+                Application::REJECTED,
+                Application::WITHDRAWN,
+                Application::EXPIRED,
             ],
         ]);
     }
@@ -37,9 +41,73 @@ class ApplicationController extends Controller
     {
         $this->authorize('view', $application);
 
-        return view('admin.applications.show', [
-            'application' => $application->load(['user', 'category', 'sections', 'sponsorships.sponsor', 'interviews.attendees']),
+        $application->load([
+            'user', 'plan.sections', 'category', 'sections',
+            'interviews.attendees', 'documentsVerifiedBy', 'invoices',
         ]);
+
+        return view('admin.applications.show', [
+            'application' => $application,
+            'plans' => \App\Models\Plan::query()->active()->orderBy('annual_fee')->get(),
+        ]);
+    }
+
+    public function verifyDocuments(Request $request, Application $application): RedirectResponse
+    {
+        $this->authorize('decide', Application::class);
+
+        $this->memberships->verifyDocuments($application, $request->user());
+
+        return back()->with('status', 'Documents marked as verified.');
+    }
+
+    public function approve(Request $request, Application $application): RedirectResponse
+    {
+        $this->authorize('decide', Application::class);
+
+        if (! $application->hasVerifiedDocuments()) {
+            return back()->with('status', 'Verify the applicant\'s identity documents before approving the application.');
+        }
+
+        $data = $request->validate([
+            'plan_id' => ['required', 'integer', 'exists:plans,id'],
+        ]);
+
+        $this->memberships->approveForPayment($application, $request->user(), (int) $data['plan_id']);
+
+        return back()->with('status', 'Application approved. The applicant has been emailed a payment link.');
+    }
+
+    public function reject(Request $request, Application $application): RedirectResponse
+    {
+        $this->authorize('decide', Application::class);
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $this->memberships->reject($application, $request->user(), $data['reason']);
+
+        return back()->with('status', 'Application rejected.');
+    }
+
+    public function downloadDocument(Application $application, string $type)
+    {
+        $this->authorize('view', $application);
+
+        abort_unless(in_array($type, ['cv', 'id'], true), 404);
+
+        $path = $type === 'cv' ? $application->cv_path : $application->id_path;
+
+        abort_unless($path && Storage::disk('local')->exists($path), 404);
+
+        $label = $type === 'cv' ? 'cv' : 'id-document';
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+        return Storage::disk('local')->download(
+            $path,
+            $application->reference.'-'.$label.($extension ? '.'.$extension : '')
+        );
     }
 
     public function scheduleInterview(Request $request, Application $application): RedirectResponse
@@ -70,19 +138,5 @@ class ApplicationController extends Controller
         $interview->application->update(['status' => Application::INTERVIEW_COMPLETED]);
 
         return back()->with('status', 'Committee recommendation recorded.');
-    }
-
-    public function decide(Request $request, Application $application): RedirectResponse
-    {
-        $this->authorize('decide', Application::class);
-
-        $data = $request->validate([
-            'decision' => ['required', 'in:approve,reject'],
-            'reason' => ['required_if:decision,reject', 'nullable', 'string', 'max:2000'],
-        ]);
-
-        $this->memberships->recordDecision($application, $request->user(), $data['decision'] === 'approve', $data['reason'] ?? null);
-
-        return back()->with('status', 'Decision recorded and audited.');
     }
 }

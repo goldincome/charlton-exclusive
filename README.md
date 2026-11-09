@@ -46,8 +46,9 @@ A complete Laravel 13 membership club management system with:
 - bookings/index, bookings/show
 - food-orders/index, food-orders/create, food-orders/show
 - invoices/index, invoices/show
-- applications/index, applications/create
-- sponsorships/index
+- applications/index, applications/create, applications/start, applications/pay, applications/payment-success
+- membership/upgrade
+- pdf/membership_application, pdf/invoice
 
 **Staff (1)**
 - bookings/index (check-in operations)

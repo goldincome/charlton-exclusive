@@ -78,7 +78,7 @@
                             @auth
                                 @if (auth()->user()->canGetMemberRates())
                                     <p style="font-size: 13px; color: var(--mist-300); margin-top: 8px;">
-                                        Your member price: £{{ number_format(app(\App\Services\PricingService::class)->applyDiscount($event->price_per_ticket, $event->member_discount_type, (float) $event->member_discount_value) / 100, 2) }}
+                                        Your member price: £{{ number_format(app(\App\Services\PricingService::class)->applyDiscount((int) $event->price_per_ticket, (string) $event->member_discount_type, (int) $event->member_discount_value) / 100, 2) }}
                                     </p>
                                 @endif
                             @endauth

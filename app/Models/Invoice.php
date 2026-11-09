@@ -17,6 +17,7 @@ class Invoice extends Model
     protected $fillable = [
         'number', 'user_id', 'invoiceable_type', 'invoiceable_id', 'issued_at',
         'subtotal', 'vat_amount', 'total', 'status',
+        'stripe_invoice_id', 'stripe_hosted_invoice_url',
     ];
 
     protected $casts = [
@@ -49,5 +50,10 @@ class Invoice extends Model
     public function grossFormatted(): string
     {
         return '£'.number_format($this->total / 100, 2);
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->status === self::PAID;
     }
 }

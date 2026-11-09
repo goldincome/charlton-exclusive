@@ -23,10 +23,11 @@
                 <!-- Account nav -->
                 <a href="{{ route('account.dashboard') }}" class="panel-nav-link {{ request()->routeIs('account.dashboard') ? 'active' : '' }}">Dashboard</a>
                 <a href="{{ route('account.bookings.index') }}" class="panel-nav-link {{ request()->routeIs('account.bookings.*') ? 'active' : '' }}">My bookings</a>
+                <a href="{{ route('account.services.index') }}" class="panel-nav-link {{ request()->routeIs('account.services.*') ? 'active' : '' }}">Section services</a>
+                <a href="{{ route('account.cart.index') }}" class="panel-nav-link {{ request()->routeIs('account.cart.*') ? 'active' : '' }}">Cart</a>
                 <a href="{{ route('account.food-orders.index') }}" class="panel-nav-link {{ request()->routeIs('account.food-orders.*') ? 'active' : '' }}">Food orders</a>
                 <a href="{{ route('account.invoices.index') }}" class="panel-nav-link {{ request()->routeIs('account.invoices.*') ? 'active' : '' }}">Invoices</a>
-                <a href="{{ route('account.applications.index') }}" class="panel-nav-link {{ request()->routeIs('account.applications.*') ? 'active' : '' }}">My applications</a>
-                <a href="{{ route('account.sponsorships.index') }}" class="panel-nav-link {{ request()->routeIs('account.sponsorships.*') ? 'active' : '' }}">Sponsorships</a>
+                <a href="{{ route('account.applications.index') }}" class="panel-nav-link {{ request()->routeIs('account.applications.*') || request()->routeIs('account.membership.*') ? 'active' : '' }}">My membership</a>
                 <div style="border-top: 1px solid rgba(201,169,97,.15); margin: 16px 24px;"></div>
                 <a href="{{ route('home') }}" class="panel-nav-link">← Back to public site</a>
             @elseif (request()->routeIs('staff.*'))
@@ -49,9 +50,12 @@
                 <a href="{{ route('admin.dashboard') }}" class="panel-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Admin dashboard</a>
                 <a href="{{ route('admin.bookings.index') }}" class="panel-nav-link {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">Bookings</a>
                 <a href="{{ route('admin.applications.index') }}" class="panel-nav-link {{ request()->routeIs('admin.applications.*') ? 'active' : '' }}">Applications</a>
+                <a href="{{ route('admin.plans.index') }}" class="panel-nav-link {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}">Plans</a>
                 <a href="{{ route('admin.members.index') }}" class="panel-nav-link {{ request()->routeIs('admin.members.*') ? 'active' : '' }}">Members</a>
                 <a href="{{ route('admin.halls.index') }}" class="panel-nav-link {{ request()->routeIs('admin.halls.*') ? 'active' : '' }}">Meeting rooms</a>
                 <a href="{{ route('admin.events.index') }}" class="panel-nav-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">Events</a>
+                <a href="{{ route('admin.sections.index') }}" class="panel-nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}">Sections</a>
+                <a href="{{ route('admin.bookable-items.index') }}" class="panel-nav-link {{ request()->routeIs('admin.bookable-items.*') ? 'active' : '' }}">Bookable items</a>
                 <a href="{{ route('admin.menu.index') }}" class="panel-nav-link {{ request()->routeIs('admin.menu.*') ? 'active' : '' }}">Menu</a>
                 <a href="{{ route('admin.gallery.index') }}" class="panel-nav-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}">Gallery</a>
                 <a href="{{ route('admin.invoices.index') }}" class="panel-nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">Invoices</a>

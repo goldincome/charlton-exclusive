@@ -14,7 +14,7 @@ class RoomRate extends Model
 
     protected $casts = [
         'standard_price_per_hour' => 'integer',
-        'member_discount_value' => 'decimal:2',
+        'member_discount_value' => 'integer', // percent points or pence (fixed)
     ];
 
     public function hall(): BelongsTo
@@ -24,10 +24,10 @@ class RoomRate extends Model
 
     public function memberPricePerHour(): int
     {
-        return (int) round(app(\App\Services\PricingService::class)->applyDiscount(
-            $this->standard_price_per_hour,
-            $this->member_discount_type,
-            (float) $this->member_discount_value
-        ));
+        return app(\App\Services\PricingService::class)->applyDiscount(
+            (int) $this->standard_price_per_hour,
+            (string) $this->member_discount_type,
+            (int) $this->member_discount_value
+        );
     }
 }

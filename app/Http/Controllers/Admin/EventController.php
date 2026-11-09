@@ -68,14 +68,21 @@ class EventController extends Controller
             'capacity' => ['required', 'integer', 'min:1'],
             'tickets_per_booking' => ['required', 'integer', 'min:1'],
             'price_per_ticket' => ['required', 'integer', 'min:0'],
-            'member_discount_type' => ['required', 'in:percent,flat'],
-            'member_discount_value' => ['required', 'numeric', 'min:0'],
+            'member_discount_type' => ['required', 'in:percent,fixed,flat'],
+            'member_discount_value' => ['required', 'integer', 'min:0'],
             'venue' => ['nullable', 'string', 'max:120'],
             'seo_title' => ['nullable', 'string', 'max:190'],
             'seo_description' => ['nullable', 'string', 'max:190'],
             'members_only' => ['boolean'],
             'active' => ['boolean'],
         ]);
+
+        $data['member_discount_type'] = app(\App\Services\PricingService::class)->normalizeDiscountType($data['member_discount_type']);
+        if ($data['member_discount_type'] === 'percent') {
+            $data['member_discount_value'] = min(100, max(0, (int) $data['member_discount_value']));
+        } else {
+            $data['member_discount_value'] = (int) $data['member_discount_value'];
+        }
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['members_only'] = $request->boolean('members_only');

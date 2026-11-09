@@ -2,7 +2,7 @@
 
 @php
     $pricing = app(\App\Services\PricingService::class);
-    $memberPrice = $pricing->applyDiscount($event->price_per_ticket, $event->member_discount_type, (float) $event->member_discount_value);
+    $memberPrice = $pricing->applyDiscount((int) $event->price_per_ticket, (string) $event->member_discount_type, (int) $event->member_discount_value);
 
     $schema = [
         '@context' => 'https://schema.org',

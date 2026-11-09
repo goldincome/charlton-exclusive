@@ -38,8 +38,9 @@
 - ✅ account/bookings/index, bookings/show
 - ✅ account/food-orders/index, food-orders/create, food-orders/show
 - ✅ account/invoices/index, invoices/show
-- ✅ account/applications/index, applications/create
-- ✅ account/sponsorships/index
+- ✅ account/applications/index, applications/create, applications/start, applications/pay, applications/payment-success
+- ✅ account/membership/upgrade
+- ✅ pdf/membership_application, pdf/invoice
 
 **Staff Area (1)**
 - ✅ staff/bookings/index (check-in/complete/no-show)

@@ -15,19 +15,39 @@ use Carbon\CarbonInterface;
 class PricingService
 {
     /**
-     * Apply a percentage or flat discount to an amount in pence.
+     * Apply a percentage or fixed discount to an amount in pence.
+     *
+     * Canonical money/discount representation (Phase 1):
+     * - $amountPence: integer pence
+     * - percent: $value is integer percent points (0-100)
+     * - fixed/flat: $value is integer pence
+     *
+     * Returns the final amount in pence (never negative).
      */
-    public function applyDiscount(int $amount, string $type, float $value): float
+    public function applyDiscount(int $amountPence, string $type, int $value): int
     {
-        if ($amount <= 0 || $value <= 0) {
-            return (float) $amount;
+        if ($amountPence <= 0 || $value <= 0) {
+            return max(0, $amountPence);
         }
 
-        if ($type === 'flat') {
-            return max(0, $amount - ($value * 100));
+        $type = $this->normalizeDiscountType($type);
+
+        if ($type === 'fixed') {
+            $discount = min($value, $amountPence);
+
+            return $amountPence - $discount;
         }
 
-        return $amount - ($amount * ($value / 100));
+        $value = min(100, $value);
+        $discount = (int) round($amountPence * ($value / 100));
+        $discount = min($discount, $amountPence);
+
+        return $amountPence - $discount;
+    }
+
+    public function normalizeDiscountType(?string $type): string
+    {
+        return in_array($type, ['fixed', 'flat'], true) ? 'fixed' : 'percent';
     }
 
     /**
@@ -42,83 +62,188 @@ class PricingService
         }
 
         if ($isMemberFinanciallyActive) {
-            return (int) round($this->applyDiscount(
-                $rate->standard_price_per_hour,
-                $rate->member_discount_type,
-                (float) $rate->member_discount_value
-            ));
+            return $this->applyDiscount(
+                (int) $rate->standard_price_per_hour,
+                (string) $rate->member_discount_type,
+                (int) $rate->member_discount_value
+            );
         }
 
-        return $rate->standard_price_per_hour;
+        return (int) $rate->standard_price_per_hour;
     }
 
     /**
      * Total hall booking price. Minimum 3 hours enforced by BookingService; price uses
      * half-hour increments.
      */
-    public function hallTotal(Hall $hall, CarbonInterface $start, CarbonInterface $end, bool $isMemberFinanciallyActive): int
+    /**
+     * @return array{original_amount:int, final_amount:int, discount_amount:int, discount_type:?string, discount_value:int, hourly_rate:?int}
+     */
+    public function hallQuote(Hall $hall, CarbonInterface $start, CarbonInterface $end, bool $isMemberFinanciallyActive): array
     {
         $hours = $start->diffInMinutes($end) / 60;
-        $hourly = $this->hallHourlyRate($hall, $start, $isMemberFinanciallyActive);
+        $rate = $hall->rateFor($start);
 
-        if ($hourly === null) {
-            return 0;
+        if (! $rate) {
+            return [
+                'original_amount' => 0,
+                'final_amount' => 0,
+                'discount_amount' => 0,
+                'discount_type' => null,
+                'discount_value' => 0,
+                'hourly_rate' => null,
+            ];
         }
 
-        return (int) round($hourly * $hours);
+        $originalHourly = (int) $rate->standard_price_per_hour;
+        $originalAmount = (int) round($originalHourly * $hours);
+        $discountType = $this->normalizeDiscountType((string) $rate->member_discount_type);
+        $discountValue = (int) $rate->member_discount_value;
+
+        if (! $isMemberFinanciallyActive) {
+            return [
+                'original_amount' => $originalAmount,
+                'final_amount' => $originalAmount,
+                'discount_amount' => 0,
+                'discount_type' => null,
+                'discount_value' => 0,
+                'hourly_rate' => $originalHourly,
+            ];
+        }
+
+        $finalHourly = $this->applyDiscount($originalHourly, $discountType, $discountValue);
+        $finalAmount = (int) round($finalHourly * $hours);
+        $discountAmount = max(0, $originalAmount - $finalAmount);
+
+        return [
+            'original_amount' => $originalAmount,
+            'final_amount' => $finalAmount,
+            'discount_amount' => $discountAmount,
+            'discount_type' => $discountAmount > 0 ? $discountType : null,
+            'discount_value' => $discountAmount > 0 ? $discountValue : 0,
+            'hourly_rate' => $finalHourly,
+        ];
     }
 
-    public function tablePrice(int $standardPrice, string $discountType, float $discountValue, bool $isMemberFinanciallyActive): int
+    public function hallTotal(Hall $hall, CarbonInterface $start, CarbonInterface $end, bool $isMemberFinanciallyActive): int
+    {
+        return $this->hallQuote($hall, $start, $end, $isMemberFinanciallyActive)['final_amount'];
+    }
+
+    public function tablePrice(int $standardPrice, string $discountType, int $discountValue, bool $isMemberFinanciallyActive): int
     {
         if (! $isMemberFinanciallyActive) {
             return $standardPrice;
         }
 
-        return (int) round($this->applyDiscount($standardPrice, $discountType, $discountValue));
+        return $this->applyDiscount($standardPrice, $discountType, $discountValue);
+    }
+
+    /**
+     * @return array{original_amount:int, final_amount:int, discount_amount:int, discount_type:?string, discount_value:int}
+     */
+    public function eventQuote(Event $event, bool $isMemberFinanciallyActive, int $tickets = 1): array
+    {
+        $tickets = max(1, $tickets);
+        $unit = (int) $event->price_per_ticket;
+        $originalAmount = $unit * $tickets;
+        $discountType = $this->normalizeDiscountType((string) $event->member_discount_type);
+        $discountValue = (int) $event->member_discount_value;
+
+        if (! $isMemberFinanciallyActive) {
+            return [
+                'original_amount' => $originalAmount,
+                'final_amount' => $originalAmount,
+                'discount_amount' => 0,
+                'discount_type' => null,
+                'discount_value' => 0,
+            ];
+        }
+
+        $finalUnit = $this->applyDiscount($unit, $discountType, $discountValue);
+        $finalAmount = $finalUnit * $tickets;
+        $discountAmount = max(0, $originalAmount - $finalAmount);
+
+        return [
+            'original_amount' => $originalAmount,
+            'final_amount' => $finalAmount,
+            'discount_amount' => $discountAmount,
+            'discount_type' => $discountAmount > 0 ? $discountType : null,
+            'discount_value' => $discountAmount > 0 ? $discountValue : 0,
+        ];
     }
 
     public function eventTicketPrice(Event $event, bool $isMemberFinanciallyActive, int $tickets = 1): int
     {
-        $unit = $event->price_per_ticket;
-
-        if ($isMemberFinanciallyActive) {
-            $unit = (int) round($this->applyDiscount(
-                $event->price_per_ticket,
-                $event->member_discount_type,
-                (float) $event->member_discount_value
-            ));
-        }
-
-        return $unit * max(1, $tickets);
+        return $this->eventQuote($event, $isMemberFinanciallyActive, $tickets)['final_amount'];
     }
 
     /**
      * Food order total after the hall-linked food discount (config percent|flat).
      * Beverage items flagged discount_exempt are never discounted.
      */
-    public function foodOrderTotal(FoodOrder $order, ?Booking $linkedHallBooking): int
+    /**
+     * @return array{original_amount:int, final_amount:int, discount_amount:int, discount_type:?string, discount_value:int}
+     */
+    public function foodOrderQuote(FoodOrder $order, ?Booking $linkedHallBooking): array
     {
-        $total = 0;
-        $discountType = AppConfig::get('hall_food_discount_type', 'percent');
-        $discountValue = (float) AppConfig::get('hall_food_discount_value', 20);
+        $original = 0;
+        $legacyFinal = 0;
+        $discountType = (string) AppConfig::get('hall_food_discount_type', 'percent');
+        $discountValue = (int) AppConfig::get('hall_food_discount_value', 20);
 
-        $order->loadMissing('items.menuItem');
+        $order->loadMissing(['items.menuItem', 'user.membership']);
 
         foreach ($order->items as $item) {
-            $line = $item->unit_price * $item->quantity;
-
+            $line = (int) $item->unit_price * (int) $item->quantity;
+            $original += $line;
+            $discountedLine = $line;
             $applies = $linkedHallBooking
                 && $linkedHallBooking->status === Booking::CONFIRMED
                 && ! $item->menuItem?->discount_exempt;
-
             if ($applies) {
-                $line = (int) round($this->applyDiscount($line, $discountType, $discountValue));
+                $discountedLine = $this->applyDiscount($line, $discountType, $discountValue);
             }
-
-            $total += $line;
+            $legacyFinal += $discountedLine;
         }
 
-        return $total;
+        // Section plan discount (Dining) on use: authoritative when a rule exists for the member's plan.
+        $user = $order->user;
+        $section = \App\Models\Section::query()->where('slug', 'dining')->first();
+        $planId = $user?->membership?->plan_id ?: $user?->membership?->membership_category_id;
+        if ($user && $section && $planId) {
+            $rule = \App\Models\PlanSectionDiscount::query()
+                ->where('plan_id', $planId)->where('section_id', $section->id)->where('is_active', true)->first();
+            if ($rule && $user->isAnnualMember() && ($section->isOpenToPublic() || $user->hasMemberAccess())) {
+                $type = $this->normalizeDiscountType($rule->type);
+                $value = (int) $rule->value;
+                $final = $this->applyDiscount($original, $type, $value);
+                $amount = max(0, $original - $final);
+                if ($amount >= max(0, $original - $legacyFinal)) {
+                    return [
+                        'original_amount' => $original,
+                        'final_amount' => $final,
+                        'discount_amount' => $amount,
+                        'discount_type' => $amount > 0 ? $type : null,
+                        'discount_value' => $amount > 0 ? $value : 0,
+                    ];
+                }
+            }
+        }
+
+        $legacyAmount = max(0, $original - $legacyFinal);
+        return [
+            'original_amount' => $original,
+            'final_amount' => $legacyFinal,
+            'discount_amount' => $legacyAmount,
+            'discount_type' => $legacyAmount > 0 ? $this->normalizeDiscountType($discountType) : null,
+            'discount_value' => $legacyAmount > 0 ? $discountValue : 0,
+        ];
+    }
+
+    public function foodOrderTotal(FoodOrder $order, ?Booking $linkedHallBooking): int
+    {
+        return $this->foodOrderQuote($order, $linkedHallBooking)['final_amount'];
     }
 
     /**

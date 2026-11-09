@@ -31,7 +31,7 @@ class SecurityHeaders
             "connect-src 'self' https://api.stripe.com",
             "object-src 'none'",
             "base-uri 'self'",
-            "form-action 'self'",
+            "form-action 'self' https://checkout.stripe.com",
         ]);
 
         $response->headers->set('Content-Security-Policy', $csp);

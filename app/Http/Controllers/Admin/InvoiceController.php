@@ -71,6 +71,10 @@ class InvoiceController extends Controller
 
         $invoice->update(['status' => Invoice::PAID]);
 
+        // Run the downstream effects (membership activation) without recording a
+        // second payment or sending the online-payment receipt.
+        app(\App\Services\InvoicePaymentService::class)->fulfill($invoice);
+
         return back()->with('status', 'Payment recorded.');
     }
 

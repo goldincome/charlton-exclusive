@@ -3,7 +3,7 @@
 use App\Http\Controllers\Account\ApplicationController;
 use App\Http\Controllers\Account\DashboardController;
 use App\Http\Controllers\Account\InvoiceController;
-use App\Http\Controllers\Account\SponsorshipController;
+use App\Http\Controllers\Account\MembershipUpgradeController;
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\ContentController;
@@ -108,27 +108,28 @@ Route::middleware(['auth', 'verified', 'noindex'])->prefix('account')->name('acc
     Route::post('/food-orders', [FoodOrderController::class, 'store'])->name('food-orders.store');
     Route::get('/food-orders/{foodOrder}', [FoodOrderController::class, 'show'])->name('food-orders.show');
 
+    Route::get('/cart', [\App\Http\Controllers\Account\CartController::class, 'index'])->name('cart.index');
+    Route::get('/services', [\App\Http\Controllers\Account\CartController::class, 'services'])->name('services.index');
+    Route::post('/cart/add/{item}', [\App\Http\Controllers\Account\CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/remove/{item}', [\App\Http\Controllers\Account\CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/checkout', [\App\Http\Controllers\Account\CartController::class, 'checkout'])->name('cart.checkout');
+    Route::get('/cart/success', [\App\Http\Controllers\Account\CartController::class, 'success'])->name('cart.success');
+
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
     Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
 
     Route::get('/applications', [ApplicationController::class, 'index'])->name('applications.index');
+    Route::get('/applications/start', [ApplicationController::class, 'start'])->name('applications.start');
+    Route::get('/applications/application-form', [ApplicationController::class, 'applicationForm'])->name('applications.form');
     Route::get('/applications/create', [ApplicationController::class, 'create'])->name('applications.create');
     Route::post('/applications', [ApplicationController::class, 'store'])->name('applications.store');
+    Route::get('/applications/{application}/pay', [ApplicationController::class, 'pay'])->name('applications.pay');
+    Route::post('/applications/{application}/pay', [ApplicationController::class, 'startPayment'])->name('applications.pay.start');
+    Route::get('/applications/{application}/payment-success', [ApplicationController::class, 'paymentSuccess'])->name('applications.payment-success');
 
-    Route::get('/sponsorships', [SponsorshipController::class, 'index'])->name('sponsorships.index');
-    Route::post('/sponsorships/{sponsorship}/accept', [SponsorshipController::class, 'accept'])->name('sponsorships.accept');
-    Route::post('/sponsorships/{sponsorship}/decline', [SponsorshipController::class, 'decline'])->name('sponsorships.decline');
-    Route::post('/sponsorships/{sponsorship}/withdraw', [SponsorshipController::class, 'withdraw'])->name('sponsorships.withdraw');
-
-    Route::post('/apply', [ApplicationController::class, 'store'])->name('apply.store');
-});
-
-// Signed sponsor links.
-Route::middleware(['signed', 'noindex'])->prefix('sponsor')->name('sponsor.')->group(function () {
-    Route::get('/{sponsorship}', [SponsorshipController::class, 'index'])->name('show');
-    Route::post('/{sponsorship}/accept', [SponsorshipController::class, 'accept'])->name('accept');
-    Route::post('/{sponsorship}/decline', [SponsorshipController::class, 'decline'])->name('decline');
+    Route::get('/membership/upgrade/{plan?}', [MembershipUpgradeController::class, 'show'])->name('membership.upgrade');
+    Route::post('/membership/upgrade', [MembershipUpgradeController::class, 'store'])->name('membership.upgrade.store');
 });
 
 /*
@@ -182,13 +183,16 @@ Route::middleware(['auth', 'verified', 'noindex', 'role:admin'])->prefix('admin'
 
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}', [AdminApplicationController::class, 'show'])->name('applications.show');
+    Route::get('/applications/{application}/documents/{type}', [AdminApplicationController::class, 'downloadDocument'])->name('applications.documents');
     Route::post('/applications/{application}/interview', [AdminApplicationController::class, 'scheduleInterview'])->name('applications.interview');
     Route::post('/interviews/{interview}/recommendation', [AdminApplicationController::class, 'recordRecommendation'])->name('applications.recommendation');
-    Route::post('/applications/{application}/decide', [AdminApplicationController::class, 'decide'])->name('applications.decide');
+    Route::post('/applications/{application}/verify', [AdminApplicationController::class, 'verifyDocuments'])->name('applications.verify');
+    Route::post('/applications/{application}/approve', [AdminApplicationController::class, 'approve'])->name('applications.approve');
+    Route::post('/applications/{application}/reject', [AdminApplicationController::class, 'reject'])->name('applications.reject');
 
     Route::get('/members', [MemberController::class, 'index'])->name('members.index');
     Route::get('/members/{user}', [MemberController::class, 'show'])->name('members.show');
-    Route::post('/members/{user}/sponsor-cap', [MemberController::class, 'updateSponsorCap'])->name('members.sponsor-cap');
+    Route::post('/members/{user}/cancel', [MemberController::class, 'cancelMembership'])->name('members.cancel');
     Route::post('/members/{user}/suspend', [MemberController::class, 'suspend'])->name('members.suspend');
     Route::post('/members/{user}/reinstate', [MemberController::class, 'reinstate'])->name('members.reinstate');
     Route::post('/members/{user}/financial', [MemberController::class, 'toggleFinancial'])->name('members.financial');
@@ -235,6 +239,12 @@ Route::middleware(['auth', 'verified', 'noindex', 'role:admin'])->prefix('admin'
     Route::post('/contact-messages/{message}', [SettingsController::class, 'markContactHandled'])->name('contact.handled');
     Route::get('/legal', [SettingsController::class, 'legal'])->name('legal.index');
     Route::post('/legal', [SettingsController::class, 'storeLegal'])->name('legal.store');
+
+    Route::resource('sections', \App\Http\Controllers\Admin\SectionController::class)->except(['show', 'destroy']);
+    Route::post('/sections/{section}/pause', [\App\Http\Controllers\Admin\SectionController::class, 'togglePause'])->name('sections.pause');
+    Route::resource('bookable-items', \App\Http\Controllers\Admin\BookableItemController::class)->except(['show', 'destroy']);
+    Route::resource('plans', \App\Http\Controllers\Admin\PlanController::class)->except(['show', 'destroy']);
+    Route::post('/plans/{plan}/sync', [\App\Http\Controllers\Admin\PlanController::class, 'sync'])->name('plans.sync');
 });
 
 /*

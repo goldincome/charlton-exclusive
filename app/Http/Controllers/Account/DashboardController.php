@@ -13,11 +13,10 @@ class DashboardController extends Controller
         $user = $request->user();
 
         return view('account.dashboard', [
-            'user' => $user->load(['memberProfile', 'membership.category']),
+            'user' => $user->load(['memberProfile', 'membership.plan']),
             'bookings' => $user->bookings()->with('bookingable')->latest()->take(5)->get(),
             'invoices' => $user->invoices()->latest()->take(5)->get(),
-            'applications' => $user->applications()->with('category')->latest()->get(),
-            'pendingSponsorships' => $user->sponsorships()->where('status', 'pending')->with('application.user')->get(),
+            'applications' => $user->applications()->with('plan')->latest()->get(),
         ]);
     }
 }

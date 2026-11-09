@@ -21,15 +21,15 @@
             <h2 style="font-size: clamp(28px, 3.4vw, 40px); margin: 14px 0 20px;">To make belonging feel effortless</h2>
             <div class="prose-club">
                 <p>The club was formed around a simple idea: that a members' club should feel like an extension of home, with better food, a better cellar and a diary worth keeping.</p>
-                <p>Members join by introduction. Two sponsoring members confirm the nomination, the committee meets the applicant, and the club takes care of the rest.</p>
+                <p>Members join by application and are reviewed by the committee; the club takes care of the rest.</p>
                 <p>Our rooms are open to members and their guests, and to approved hire. We publish our rates, our rules and our policies so that nothing is a surprise.</p>
             </div>
         </div>
 
         <div style="flex: 1 1 380px; display: grid; gap: 16px; align-content: start;">
             <div class="card-light">
-                <h3 style="font-size: 22px; margin-bottom: 10px;">Founded on introduction</h3>
-                <p style="color: var(--slate-600);">Every application is sponsored and reviewed. It keeps the room right.</p>
+                <h3 style="font-size: 22px; margin-bottom: 10px;">Reviewed by the committee</h3>
+                <p style="color: var(--slate-600);">Every application is reviewed. It keeps the room right.</p>
             </div>
             <div class="card-light">
                 <h3 style="font-size: 22px; margin-bottom: 10px;">Run for members</h3>

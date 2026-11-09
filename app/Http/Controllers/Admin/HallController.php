@@ -101,8 +101,8 @@ class HallController extends Controller
             'image' => ['nullable', 'image', 'max:10240'],
             'ratings' => ['nullable', 'array'],
             'ratings.*.standard_price_per_hour' => ['nullable', 'integer', 'min:0'],
-            'ratings.*.member_discount_type' => ['nullable', 'in:percent,flat'],
-            'ratings.*.member_discount_value' => ['nullable', 'numeric', 'min:0'],
+            'ratings.*.member_discount_type' => ['nullable', 'in:percent,fixed,flat'],
+            'ratings.*.member_discount_value' => ['nullable', 'integer', 'min:0'],
             'hours' => ['nullable', 'array'],
             'features' => ['nullable', 'string'],
         ]);
@@ -118,12 +118,18 @@ class HallController extends Controller
                 continue;
             }
 
+            $type = app(\App\Services\PricingService::class)->normalizeDiscountType($rate['member_discount_type'] ?? 'percent');
+            $value = (int) ($rate['member_discount_value'] ?? 0);
+            if ($type === 'percent') {
+                $value = min(100, max(0, $value));
+            }
+
             RoomRate::query()->updateOrCreate(
                 ['hall_id' => $hall->id, 'day_type' => $dayType],
                 [
                     'standard_price_per_hour' => (int) $rate['standard_price_per_hour'],
-                    'member_discount_type' => $rate['member_discount_type'] ?? 'percent',
-                    'member_discount_value' => (float) ($rate['member_discount_value'] ?? 0),
+                    'member_discount_type' => $type,
+                    'member_discount_value' => $value,
                 ]
             );
         }

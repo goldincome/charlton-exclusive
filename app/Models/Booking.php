@@ -22,9 +22,9 @@ class Booking extends Model
     public const NO_SHOW = 'no_show';
 
     protected $fillable = [
-        'user_id', 'bookingable_type', 'bookingable_id', 'status', 'start_time', 'end_time',
-        'guests', 'price_locked', 'discount_applied', 'discount_type', 'notes',
-        'approved_at', 'confirmed_at', 'checked_in_at', 'reference', 'cancelled_at',
+        'user_id', 'plan_id', 'bookingable_type', 'bookingable_id', 'section_id', 'bookable_item_id', 'status', 'start_time', 'end_time',
+        'guests', 'price_locked', 'original_amount', 'final_amount', 'discount_applied', 'discount_type', 'discount_value', 'discount_amount', 'notes',
+        'approved_at', 'confirmed_at', 'checked_in_at', 'reference', 'stripe_session_id', 'cancelled_at',
         'cancellation_reason', 'rejected_at', 'rejection_reason', 'expires_at',
     ];
 
@@ -33,7 +33,11 @@ class Booking extends Model
         'end_time' => 'datetime',
         'guests' => 'integer',
         'price_locked' => 'integer',
+        'original_amount' => 'integer',
+        'final_amount' => 'integer',
         'discount_applied' => 'decimal:2',
+        'discount_value' => 'integer', // percent points or pence (fixed), snapshot
+        'discount_amount' => 'integer', // pence saved, snapshot
         'approved_at' => 'datetime',
         'confirmed_at' => 'datetime',
         'checked_in_at' => 'datetime',
@@ -41,6 +45,21 @@ class Booking extends Model
         'rejected_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
+
+    public function plan(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    public function section(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Section::class);
+    }
+
+    public function bookableItem(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(BookableItem::class);
+    }
 
     protected static function booted(): void
     {

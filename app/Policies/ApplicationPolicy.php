@@ -18,22 +18,12 @@ class ApplicationPolicy
             return true;
         }
 
-        if ($application->user_id === $user->id) {
-            return true;
-        }
-
-        return $application->sponsorships()->where('sponsor_id', $user->id)->exists();
+        return $application->user_id === $user->id;
     }
 
     public function review(User $user, Application $application): bool
     {
-        if (! $user->isCommittee() && ! $user->isAdmin()) {
-            return false;
-        }
-
-        return ! $application->sponsorships()
-            ->where('sponsor_id', $user->id)
-            ->exists();
+        return $user->isCommittee() || $user->isAdmin();
     }
 
     public function decide(User $user): bool

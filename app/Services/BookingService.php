@@ -41,21 +41,83 @@ class BookingService
         $price = 0;
         $discountType = null;
         $discountValue = 0;
+        $discountAmount = 0;
+
+        $originalAmount = 0;
+        $sectionId = null;
+        $bookableItemId = null;
+        $planId = $user->membership?->plan_id ?: $user->membership?->membership_category_id;
+        $usageRecorder = app(SectionUsageRecorder::class);
 
         if ($resourceType === 'hall') {
             $hall = Hall::query()->findOrFail($resourceId);
             $buffer = $hall->buffer_minutes;
-            $price = $this->pricing->hallTotal($hall, $start, $end, $user->canGetMemberRates());
+            $hours = $start->diffInMinutes($end) / 60;
+            $rate = $hall->rateFor($start);
+            $originalAmount = $rate ? (int) round(((int) $rate->standard_price_per_hour) * $hours) : 0;
+            $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => Hall::class, 'bookingable_id' => $hall->id]), $originalAmount);
+            $price = $sectionQuote['discount_amount'] > 0 ? $sectionQuote['final_amount'] : $this->pricing->hallTotal($hall, $start, $end, $user->canGetMemberRates());
+            if ($sectionQuote['discount_amount'] > 0) {
+                $discountType = $sectionQuote['discount_type'];
+                $discountValue = $sectionQuote['discount_value'];
+                $discountAmount = $sectionQuote['discount_amount'];
+            } else {
+                $rateQuote = $this->pricing->hallQuote($hall, $start, $end, $user->canGetMemberRates());
+                $discountType = $rateQuote['discount_type'];
+                $discountValue = $rateQuote['discount_value'];
+                $discountAmount = $rateQuote['discount_amount'];
+                $originalAmount = $rateQuote['original_amount'] ?: $originalAmount;
+            }
+            $sectionId = $sectionQuote['section_id'];
+            $bookableItemId = $sectionQuote['bookable_item_id'];
+            $planId = $sectionQuote['plan_id'] ?: $planId;
         } elseif ($resourceType === 'event') {
             $event = \App\Models\Event::query()->findOrFail($resourceId);
             $tickets = max(1, (int) ($data['guests'] ?? 1));
-            $price = $this->pricing->eventTicketPrice($event, $user->canGetMemberRates(), $tickets);
+            $originalAmount = (int) $event->price_per_ticket * $tickets;
+            $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => \App\Models\Event::class, 'bookingable_id' => $event->id]), $originalAmount);
+            $price = $sectionQuote['discount_amount'] > 0 ? $sectionQuote['final_amount'] : $this->pricing->eventTicketPrice($event, $user->canGetMemberRates(), $tickets);
+            if ($sectionQuote['discount_amount'] > 0) {
+                $discountType = $sectionQuote['discount_type'];
+                $discountValue = $sectionQuote['discount_value'];
+                $discountAmount = $sectionQuote['discount_amount'];
+            } else {
+                $eventQuote = $this->pricing->eventQuote($event, $user->canGetMemberRates(), $tickets);
+                $discountType = $eventQuote['discount_type'];
+                $discountValue = $eventQuote['discount_value'];
+                $discountAmount = $eventQuote['discount_amount'];
+                $originalAmount = $eventQuote['original_amount'] ?: $originalAmount;
+            }
+            $sectionId = $sectionQuote['section_id'];
+            $bookableItemId = $sectionQuote['bookable_item_id'];
+            $planId = $sectionQuote['plan_id'] ?: $planId;
+        } elseif ($resourceType === 'table') {
+            $table = \App\Models\DiningTable::query()->with('category')->findOrFail($resourceId);
+            $category = $table->category;
+            $originalAmount = (int) ($category?->standard_price ?? 0);
+            $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => \App\Models\DiningTable::class, 'bookingable_id' => $table->id]), $originalAmount);
+            if ($sectionQuote['discount_amount'] > 0) {
+                $price = $sectionQuote['final_amount'];
+                $discountType = $sectionQuote['discount_type'];
+                $discountValue = $sectionQuote['discount_value'];
+                $discountAmount = $sectionQuote['discount_amount'];
+            } elseif ($category && $user->canGetMemberRates()) {
+                $price = $this->pricing->tablePrice($originalAmount, (string) $category->member_discount_type, (int) $category->member_discount_value, true);
+                $discountAmount = max(0, $originalAmount - $price);
+                $discountType = $discountAmount > 0 ? $this->pricing->normalizeDiscountType((string) $category->member_discount_type) : null;
+                $discountValue = $discountAmount > 0 ? (int) $category->member_discount_value : 0;
+            } else {
+                $price = $originalAmount;
+            }
+            $sectionId = $sectionQuote['section_id'];
+            $bookableItemId = $sectionQuote['bookable_item_id'];
+            $planId = $sectionQuote['plan_id'] ?: $planId;
         }
 
         $slots = $this->slots->slotsFor($start, $end, $buffer);
 
         try {
-            return DB::transaction(function () use ($user, $resourceType, $resourceId, $start, $end, $data, $price, $buffer, $slots, $discountType, $discountValue) {
+            return DB::transaction(function () use ($user, $resourceType, $resourceId, $start, $end, $data, $price, $originalAmount, $buffer, $slots, $discountType, $discountValue, $discountAmount, $sectionId, $bookableItemId, $planId) {
                 // Layer 1: pessimistic row lock on the parent resource.
                 $this->lockResource($resourceType, $resourceId);
 
@@ -69,15 +131,22 @@ class BookingService
 
                 $booking = Booking::query()->create([
                     'user_id' => $user->id,
+                    'plan_id' => $planId,
                     'bookingable_type' => $this->resourceClass($resourceType),
                     'bookingable_id' => $resourceId,
+                    'section_id' => $sectionId,
+                    'bookable_item_id' => $bookableItemId,
                     'status' => Booking::REQUESTED,
                     'start_time' => $start,
                     'end_time' => $end,
                     'guests' => (int) ($data['guests'] ?? 1),
                     'price_locked' => $price,
-                    'discount_applied' => $discountValue,
+                    'original_amount' => $originalAmount ?: $price,
+                    'final_amount' => $price,
+                    'discount_applied' => $discountType === 'percent' ? $discountValue : 0, // legacy column
                     'discount_type' => $discountType,
+                    'discount_value' => $discountValue,
+                    'discount_amount' => $discountAmount,
                     'notes' => $data['notes'] ?? null,
                     'expires_at' => now()->addHours(AppConfig::int('booking_request_expiry_hours', 72)),
                 ]);
@@ -132,7 +201,14 @@ class BookingService
             'confirmed_at' => now(),
         ]);
 
-        return $booking->refresh();
+        $booking = $booking->refresh();
+        try {
+            app(SectionUsageRecorder::class)->recordBooking($booking);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Section usage recording failed', ['booking_id' => $booking->id, 'error' => $e->getMessage()]);
+        }
+
+        return $booking;
     }
 
     public function cancel(Booking $booking, User $actor, ?string $reason = null): Booking

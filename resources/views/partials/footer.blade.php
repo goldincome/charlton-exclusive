@@ -35,7 +35,7 @@
                     <a href="{{ route('events.index') }}">Events</a>
                     <a href="{{ route('dining') }}">Dining</a>
                     <a href="{{ route('contact') }}">Contact</a>
-                    <a href="{{ route('account.applications.create') }}">Request an invitation</a>
+                    <a href="{{ route('account.applications.start') }}">Request an invitation</a>
                 </div>
             </div>
 

@@ -20,7 +20,7 @@ class StripeController extends Controller
      */
     public function checkout(Request $request, Invoice $invoice)
     {
-        $this->authorize('view', $invoice);
+        abort_unless($request->user()?->can('view', $invoice), 403);
 
         abort_unless($invoice->status === Invoice::UNPAID, 422, 'This invoice is not payable.');
 
@@ -28,27 +28,53 @@ class StripeController extends Controller
             return back()->with('status', 'Stripe is not configured in this environment yet.');
         }
 
-        $session = Cashier::stripe()->checkout->sessions->create([
-            'mode' => 'payment',
-            'customer_email' => $request->user()->email,
-            'line_items' => [[
-                'price_data' => [
-                    'currency' => 'gbp',
-                    'product_data' => ['name' => 'Charlton Exclusive Club — Invoice '.$invoice->number],
-                    'unit_amount' => $invoice->total,
-                ],
-                'quantity' => 1,
-            ]],
-            'success_url' => route('checkout.success').'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('checkout.cancelled'),
-            'metadata' => ['invoice_id' => $invoice->id],
-        ]);
+        try {
+            $session = Cashier::stripe()->checkout->sessions->create([
+                'mode' => 'payment',
+                'customer_email' => $request->user()->email,
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'gbp',
+                        'product_data' => ['name' => 'Charlton Exclusive Club — Invoice '.$invoice->number],
+                        'unit_amount' => $invoice->total,
+                    ],
+                    'quantity' => 1,
+                ]],
+                'success_url' => route('checkout.success').'?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('checkout.cancelled'),
+                'metadata' => ['invoice_id' => $invoice->id],
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('status', 'Could not connect to Stripe right now. Please try again. ('.get_class($e).')');
+        }
 
         return redirect($session->url);
     }
 
     public function success(Request $request): RedirectResponse
     {
+        $sessionId = $request->query('session_id');
+
+        if ($sessionId && config('cashier.secret')) {
+            try {
+                $session = Cashier::stripe()->checkout->sessions->retrieve($sessionId);
+                $invoiceId = (string) ($session->metadata->invoice_id ?? '');
+
+                if ($invoiceId && ($session->payment_status ?? null) === 'paid'
+                    && ($invoice = Invoice::query()->find($invoiceId))) {
+                    app(\App\Services\InvoicePaymentService::class)->fulfill(
+                        $invoice,
+                        $session->payment_intent ?? null,
+                        $session->id ?? null,
+                    );
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
         return redirect()->route('account.invoices.index')
             ->with('status', 'Thank you — your payment is being confirmed.');
     }
@@ -103,29 +129,71 @@ class StripeController extends Controller
     private function handle(object $event): void
     {
         $type = $event->type;
+        $billing = app(\App\Services\MembershipBillingService::class);
 
-        if ($type === 'checkout.session.completed') {
+        if (in_array($type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
             $session = $event->data->object;
-            $invoiceId = $session->metadata->invoice_id ?? null;
+            $metadata = (array) ($session->metadata ?? []);
+            $invoiceId = $metadata['invoice_id'] ?? null;
+            $orderId = $metadata['order_id'] ?? null;
 
-            if ($invoiceId && ($invoice = Invoice::query()->find($invoiceId))) {
-                Payment::query()->create([
-                    'invoice_id' => $invoice->id,
-                    'user_id' => $invoice->user_id,
-                    'stripe_payment_intent_id' => $session->payment_intent,
-                    'amount' => $invoice->total,
-                    'currency' => 'gbp',
-                    'method' => 'card',
-                    'status' => 'succeeded',
-                    'paid_at' => now(),
-                ]);
-
-                $invoice->update(['status' => Invoice::PAID]);
-
-                if ($invoice->invoiceable_type === \App\Models\Booking::class) {
-                    app(BookingService::class)->confirm($invoice->invoiceable);
+            if ($orderId && ($order = \App\Models\Order::query()->with('items')->find($orderId)) && $order->status !== 'paid') {
+                $order->update(['status' => 'paid', 'stripe_session_id' => $session->id ?? $order->stripe_session_id]);
+                \App\Models\CartItem::query()->where('user_id', $order->user_id)->delete();
+                try {
+                    foreach ($order->items->groupBy('section_id') as $sectionId => $items) {
+                        if (! $sectionId) continue;
+                        \App\Models\SectionUsage::query()->updateOrCreate(
+                            ['usable_type' => \App\Models\Order::class, 'usable_id' => $order->id, 'section_id' => (int) $sectionId],
+                            [
+                                'user_id' => $order->user_id,
+                                'plan_id' => $order->plan_id,
+                                'original_amount' => (int) $items->sum('original_amount'),
+                                'discount_amount' => (int) $items->sum('discount_amount'),
+                                'final_amount' => (int) $items->sum('final_amount'),
+                                'discount_type' => $order->discount_type,
+                                'discount_value' => (int) $order->discount_value,
+                                'used_at' => now(),
+                                'metadata' => ['reference' => $order->reference],
+                            ]
+                        );
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Order section usage recording failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
                 }
             }
+
+            if ($invoiceId && ($invoice = Invoice::query()->with('user', 'invoiceable')->find($invoiceId))) {
+                $customerId = $session->customer ?? null;
+
+                if ($customerId && $invoice->user && ! $invoice->user->stripe_id) {
+                    $invoice->user->forceFill(['stripe_id' => $customerId])->save();
+                }
+
+                app(\App\Services\InvoicePaymentService::class)->fulfill(
+                    $invoice,
+                    $session->payment_intent ?? null,
+                    $session->id ?? null,
+                    $session->subscription ?? null,
+                    $metadata['billing_frequency'] ?? null,
+                );
+            }
+        }
+
+        if ($type === 'invoice.paid') {
+            $billing->recordPaidInvoice($event->data->object);
+        }
+
+        if ($type === 'invoice.payment_failed') {
+            $billing->recordFailedInvoice($event->data->object);
+        }
+
+        if (in_array($type, ['customer.subscription.created', 'customer.subscription.updated'], true)) {
+            $billing->syncSubscription($event->data->object);
+        }
+
+        if ($type === 'customer.subscription.deleted') {
+            $billing->subscriptionDeleted($event->data->object);
         }
 
         if ($type === 'charge.refunded') {
@@ -133,8 +201,25 @@ class StripeController extends Controller
             Log::info('Stripe refund received', ['charge' => $charge->id]);
         }
 
-        if ($type === 'invoice.payment_failed' || $type === 'customer.subscription.deleted') {
-            Log::warning('Stripe subscription event', ['type' => $type]);
+        if (in_array($type, ['product.updated', 'price.created', 'price.updated'], true)) {
+            $object = $event->data->object;
+            $planId = $object->metadata->plan_id ?? null;
+            if ($planId && ($plan = \App\Models\Plan::query()->find($planId))) {
+                $updates = ['stripe_sync_status' => 'synced', 'stripe_synced_at' => now(), 'stripe_sync_error' => null];
+                if ($type === 'product.updated') {
+                    $updates['stripe_product_id'] = $object->id;
+                } else {
+                    $frequency = $object->metadata->frequency ?? null;
+                    if ($frequency === \App\Models\Membership::MONTHLY) {
+                        $updates['stripe_monthly_price_id'] = $object->id;
+                    } else {
+                        $updates['stripe_annual_price_id'] = $object->id;
+                        $updates['stripe_price_id'] = $object->id;
+                    }
+                    $updates['stripe_product_id'] = $object->product ?? $plan->stripe_product_id;
+                }
+                $plan->update($updates);
+            }
         }
 
         if ($type === 'charge.dispute.created') {

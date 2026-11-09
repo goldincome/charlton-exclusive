@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
             ResolveSlugRedirects::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',
+        ]);
+
         $middleware->alias([
             'noindex' => NoIndex::class,
             'mfa.staff' => EnsureMfaForStaff::class,

@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\FoodOrder;
 use App\Models\MenuItem;
 use App\Services\PricingService;
+use App\Services\SectionUsageRecorder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class FoodOrderController extends Controller
 {
-    public function __construct(private PricingService $pricing)
+    public function __construct(private PricingService $pricing, private SectionUsageRecorder $sectionUsage)
     {
     }
 
@@ -74,7 +75,15 @@ class FoodOrderController extends Controller
             }
 
             $linked = $order->booking_id ? Booking::query()->find($order->booking_id) : null;
-            $order->update(['price_locked' => $this->pricing->foodOrderTotal($order, $linked)]);
+            $order->load('user.membership');
+            $quote = $this->pricing->foodOrderQuote($order, $linked);
+            $order->update(['price_locked' => $quote['final_amount']]);
+
+            try {
+                $this->sectionUsage->recordFoodOrder($order, $quote);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Food order section usage recording failed', ['food_order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
 
             return $order;
         });

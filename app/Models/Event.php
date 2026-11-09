@@ -21,7 +21,7 @@ class Event extends Model
         'capacity' => 'integer',
         'tickets_per_booking' => 'integer',
         'price_per_ticket' => 'integer',
-        'member_discount_value' => 'decimal:2',
+        'member_discount_value' => 'integer', // percent points or pence (fixed)
         'active' => 'boolean',
         'cancelled_at' => 'datetime',
         'members_only' => 'boolean',

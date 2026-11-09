@@ -60,7 +60,7 @@
             @forelse ($recentApplications as $application)
                 <a href="{{ route('admin.applications.show', $application) }}" class="card-light" style="display: block; background: #fff; border: 1px solid #E0D5B8; text-decoration: none; color: inherit;">
                     <p style="font-weight: 600; margin: 0 0 4px;">{{ $application->user->name }}</p>
-                    <p style="font-size: 14px; color: var(--slate-600); margin: 0;">{{ $application->category->name }}</p>
+                    <p style="font-size: 14px; color: var(--slate-600); margin: 0;">{{ $application->resolvedPlan()?->name ?? 'Plan not selected' }}</p>
                     <span class="badge badge-gold" style="margin-top: 6px;">{{ ucfirst($application->status) }}</span>
                 </a>
             @empty

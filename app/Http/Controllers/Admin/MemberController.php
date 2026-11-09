@@ -21,7 +21,7 @@ class MemberController extends Controller
         return view('admin.members.index', [
             'members' => User::query()
                 ->role('member')
-                ->with(['memberProfile', 'membership.category'])
+                ->with(['memberProfile', 'membership.plan'])
                 ->when($request->query('q'), fn ($q, $search) => $q->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
                 ->paginate(20),
         ]);
@@ -30,17 +30,31 @@ class MemberController extends Controller
     public function show(User $user): View
     {
         return view('admin.members.show', [
-            'user' => $user->load(['memberProfile', 'membership.category', 'applications', 'invoices']),
-            'sponsorships' => $user->sponsorships()->with('application.user')->latest()->get(),
+            'user' => $user->load(['memberProfile', 'membership.plan', 'applications.plan', 'invoices']),
         ]);
     }
 
-    public function updateSponsorCap(Request $request, User $user): RedirectResponse
+    public function cancelMembership(Request $request, User $user): RedirectResponse
     {
-        $data = $request->validate(['sponsor_cap' => ['required', 'integer', 'min:0', 'max:50']]);
-        $user->memberProfile()->updateOrCreate([], ['sponsor_cap' => $data['sponsor_cap']]);
+        $membership = $user->membership()->first();
 
-        return back()->with('status', 'Sponsor cap updated.');
+        abort_unless($membership, 404, 'This member has no membership to cancel.');
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:2000'],
+            'immediately' => ['nullable', 'boolean'],
+        ]);
+
+        $this->memberships->cancelMembership(
+            $membership,
+            $request->user(),
+            $data['reason'],
+            $request->boolean('immediately')
+        );
+
+        return back()->with('status', $request->boolean('immediately')
+            ? 'Membership cancelled immediately.'
+            : 'Membership scheduled to cancel at the end of the billing period.');
     }
 
     public function suspend(User $user): RedirectResponse

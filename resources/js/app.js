@@ -141,9 +141,17 @@ function initBookingEstimate() {
         }
 
         const hours = (end - start) / 3600000;
-        const total = rate.price * hours;
+        const standardPence = rate.standard_price_pence ?? (rate.price != null ? Math.round(rate.price * 100) : 0);
+        const totalStandardPence = Math.round(standardPence * hours);
+        let totalMemberPence = totalStandardPence;
+        if (rate.discount_type === 'fixed') {
+            totalMemberPence = Math.max(0, totalStandardPence - Math.round((rate.discount_value || 0) * hours));
+        } else {
+            const pct = Math.min(100, Math.max(0, Number(rate.discount_value ?? rate.discount ?? 0)));
+            totalMemberPence = Math.round(totalStandardPence * (1 - pct / 100));
+        }
 
-        output.textContent = `${hours.toFixed(1)} hours · standard estimate £${total.toFixed(2)} · member estimate £${(total * (1 - rate.discount / 100)).toFixed(2)}`;
+        output.textContent = `${hours.toFixed(1)} hours · standard estimate £${(totalStandardPence / 100).toFixed(2)} · member estimate £${(totalMemberPence / 100).toFixed(2)}`;
     };
 
     startInput.addEventListener('change', update);

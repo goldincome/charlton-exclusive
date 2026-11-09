@@ -35,7 +35,7 @@
             @else
                 <a href="{{ route('login') }}" style="font-size: 15px; color: var(--champagne-200);">Member login</a>
             @endauth
-            <a href="{{ route('account.applications.create') }}" class="btn btn-gold btn-sm">Request an invitation</a>
+            <a href="{{ route('account.applications.start') }}" class="btn btn-gold btn-sm">Request an invitation</a>
 
             <button type="button" data-menu-toggle aria-expanded="false" aria-controls="mobile-menu" class="mobile-menu-button"
                     style="background: transparent; border: 1px solid rgba(201,169,97,.5); color: var(--ivory-100); border-radius: 4px; min-height: 44px; min-width: 44px; padding: 0 12px; font: inherit; cursor: pointer;">
@@ -52,7 +52,7 @@
             @guest
                 <a href="{{ route('login') }}" style="padding: 12px 0; font-size: 17px; color: var(--champagne-200);">Member login</a>
             @endguest
-            <a href="{{ route('account.applications.create') }}" class="btn btn-gold" style="margin-top: 12px;">Request an invitation</a>
+            <a href="{{ route('account.applications.start') }}" class="btn btn-gold" style="margin-top: 12px;">Request an invitation</a>
         </nav>
     </div>
 </header>

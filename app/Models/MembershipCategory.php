@@ -3,44 +3,35 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class MembershipCategory extends Model
+/**
+ * Compatibility shim during migration to plans (Phase 2).
+ * Source of truth is now the `plans` table via Plan.
+ */
+class MembershipCategory extends Plan
 {
-    protected $fillable = [
-        'name', 'slug', 'description', 'benefits', 'entrance_fee', 'annual_fee',
-        'monthly_fee', 'min_sections', 'nominee_limit', 'active', 'seo_title', 'seo_description',
-    ];
+    protected $table = 'plans';
 
-    protected $casts = [
-        'benefits' => 'array',
-        'entrance_fee' => 'integer',
-        'annual_fee' => 'integer',
-        'monthly_fee' => 'integer',
-        'min_sections' => 'integer',
-        'nominee_limit' => 'integer',
-        'active' => 'boolean',
-    ];
+    public function getAttribute($key)
+    {
+        if ($key === 'active') {
+            return $this->attributes['is_active'] ?? parent::getAttribute('is_active');
+        }
+
+        return parent::getAttribute($key);
+    }
 
     public function sections(): BelongsToMany
     {
-        return $this->belongsToMany(Section::class, 'category_section');
-    }
-
-    public function applications(): HasMany
-    {
-        return $this->hasMany(Application::class);
+        return $this->belongsToMany(Section::class, 'plan_section_discounts', 'plan_id', 'section_id', 'id', 'id')
+            ->withPivot(['type', 'value', 'is_active'])
+            ->withTimestamps();
     }
 
     public function scopeActive(Builder $query): Builder
     {
-        return $query->where('active', true);
-    }
-
-    public function monthlyAvailable(): bool
-    {
-        return ! is_null($this->monthly_fee) && $this->monthly_fee > 0;
+        return $query->where('is_active', true);
     }
 }
