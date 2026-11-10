@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Hall;
 use App\Services\BookingService;
 use App\Services\PricingService;
+use App\Services\SlotManager;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,41 @@ class BookingController extends Controller
             'hall' => $hall->load(['rates', 'images', 'hours']),
             'memberRate' => $this->pricing->hallHourlyRate($hall, now()->addDay(), auth()->user()?->canGetMemberRates() ?? false),
         ]);
+    }
+
+    public function getTimeSlots(Request $request, SlotManager $slotManager)
+    {
+        $hallId = $request->input('hall_id');
+        $hall = Hall::query()->with('hours')->findOrFail($hallId);
+        $date = Carbon::parse($request->input('booking_date'));
+        $dayOfWeek = $date->dayOfWeek;
+
+        $hallHour = $hall->hours->firstWhere('weekday', $dayOfWeek);
+        if (! $hallHour || ! $hallHour->is_open) {
+            return response()->json(['slots' => []]);
+        }
+
+        $openTime = Carbon::parse($date->toDateString().' '.$hallHour->opens_at);
+        $closeTime = Carbon::parse($date->toDateString().' '.$hallHour->closes_at);
+
+        $slots = [];
+        $cursor = $openTime->copy();
+        while ($cursor->lt($closeTime)) {
+            $end = $cursor->copy()->addMinutes(60);
+            if ($end->gt($closeTime)) {
+                break;
+            }
+
+            $slotStartStr = $cursor->toDateTimeString();
+            $conflicts = $slotManager->conflicts('hall', $hall->id, [$slotStartStr]);
+
+            if ($conflicts->isEmpty()) {
+                $slots[] = $cursor->format('g:i A').' - '.$end->format('g:i A');
+            }
+            $cursor->addMinutes(60);
+        }
+
+        return response()->json(['slots' => $slots]);
     }
 
     public function storeHall(StoreHallBookingRequest $request, Hall $hall): RedirectResponse

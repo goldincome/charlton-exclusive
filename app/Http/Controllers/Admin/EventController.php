@@ -68,7 +68,7 @@ class EventController extends Controller
             'ends_at' => ['required', 'date', 'after:starts_at'],
             'capacity' => ['required', 'integer', 'min:1'],
             'tickets_per_booking' => ['required', 'integer', 'min:1'],
-            'price_per_ticket' => ['required', 'integer', 'min:0'],
+            'price_per_ticket' => ['required', 'numeric', 'min:0'],
             'member_discount_type' => ['required', 'in:percent,fixed,flat'],
             'member_discount_value' => ['required', 'integer', 'min:0'],
             'venue' => ['nullable', 'string', 'max:120'],
@@ -86,6 +86,7 @@ class EventController extends Controller
         }
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $data['price_per_ticket'] = (int) round(((float) $data['price_per_ticket']) * 100);
         $data['members_only'] = $request->boolean('members_only');
         $data['active'] = $request->boolean('active', true);
 

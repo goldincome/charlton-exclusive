@@ -20,9 +20,15 @@ class RoomController extends Controller
     {
         $hall = Hall::query()->active()->where('slug', $slug)->with(['rates', 'images', 'features', 'hours'])->firstOrFail();
 
+        $memberRate = null;
+        if (auth()->check() && auth()->user()->canGetMemberRates()) {
+            $memberRate = optional($hall->rates->first())->memberPricePerHour();
+        }
+
         return view('public.rooms.show', [
             'hall' => $hall,
             'others' => Hall::query()->active()->whereKeyNot($hall->id)->take(3)->get(),
+            'memberRate' => $memberRate,
         ]);
     }
 

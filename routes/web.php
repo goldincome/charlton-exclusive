@@ -89,6 +89,7 @@ Route::get('/gallery/photo/{photo}/thumb', [MediaController::class, 'thumbnail']
 Route::get('/book/room/{hall}', [BookingController::class, 'createRoom'])->name('book.room');
 Route::get('/book/event/{event}', [BookingController::class, 'createEvent'])->name('book.event');
 Route::get('/book/table/{table}', [BookingController::class, 'createTable'])->name('book.table');
+Route::get('/schedule/slots', [BookingController::class, 'getTimeSlots'])->name('time.slots');
 
 /*
 |--------------------------------------------------------------------------
@@ -182,6 +183,7 @@ Route::middleware(['auth', 'verified', 'noindex', 'role:admin'])->prefix('admin'
     Route::post('/bookings/{booking}/reject', [AdminBookingController::class, 'reject'])->name('bookings.reject');
 
     Route::resource('halls', HallController::class);
+    Route::match(['post', 'put', 'delete'], '/halls/images/{image}', [HallController::class, 'destroyImage'])->name('halls.images.destroy');
     Route::resource('events', AdminEventController::class);
     Route::post('/events/{event}/cancel', [AdminEventController::class, 'cancel'])->name('events.cancel');
 

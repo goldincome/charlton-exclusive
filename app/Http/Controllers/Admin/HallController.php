@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Hall;
 use App\Models\HallFeature;
 use App\Models\HallHour;
+use App\Models\HallImage;
 use App\Models\Redirect;
 use App\Models\RoomRate;
 use App\Services\PricingService;
@@ -13,6 +14,7 @@ use App\Services\StorageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -34,9 +36,14 @@ class HallController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $hall = Hall::query()->create($this->validated($request));
+        $data = $this->validated($request);
 
-        $this->syncExtras($request, $hall);
+        $hall = DB::transaction(function () use ($request, $data) {
+            $hall = Hall::query()->create($data);
+            $this->syncExtras($request, $hall);
+
+            return $hall;
+        });
 
         return redirect()->route('admin.halls.edit', $hall)->with('status', 'Room created.');
     }
@@ -50,17 +57,21 @@ class HallController extends Controller
 
     public function update(Request $request, Hall $hall): RedirectResponse
     {
+        $data = $this->validated($request, $hall);
         $oldSlug = $hall->slug;
-        $hall->update($this->validated($request, $hall));
 
-        if ($oldSlug !== $hall->slug) {
-            Redirect::query()->updateOrCreate(
-                ['from_path' => '/meeting-rooms/'.$oldSlug.'/'],
-                ['to_path' => '/meeting-rooms/'.$hall->slug.'/', 'status_code' => 301]
-            );
-        }
+        DB::transaction(function () use ($request, $hall, $data, $oldSlug) {
+            $hall->update($data);
 
-        $this->syncExtras($request, $hall);
+            if ($oldSlug !== $hall->slug) {
+                Redirect::query()->updateOrCreate(
+                    ['from_path' => '/meeting-rooms/'.$oldSlug.'/'],
+                    ['to_path' => '/meeting-rooms/'.$hall->slug.'/', 'status_code' => 301]
+                );
+            }
+
+            $this->syncExtras($request, $hall);
+        });
 
         return back()->with('status', 'Room updated.');
     }
@@ -70,6 +81,14 @@ class HallController extends Controller
         $hall->delete();
 
         return redirect()->route('admin.halls.index')->with('status', 'Room deleted.');
+    }
+
+    public function destroyImage(HallImage $image): RedirectResponse
+    {
+        $this->storage->delete($image->path);
+        $image->delete();
+
+        return back()->with('status', 'Room image deleted.');
     }
 
     private function validated(Request $request, ?Hall $hall = null): array
@@ -86,29 +105,38 @@ class HallController extends Controller
             'seo_title' => ['nullable', 'string', 'max:190'],
             'seo_description' => ['nullable', 'string', 'max:190'],
             'active' => ['boolean'],
-        ]);
-
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
-        $data['active'] = $request->boolean('active');
-
-        return $data;
-    }
-
-    private function syncExtras(Request $request, Hall $hall): void
-    {
-        $request->validate([
             'image' => ['nullable', 'image', 'max:10240'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['image', 'max:10240'],
             'ratings' => ['nullable', 'array'],
-            'ratings.*.standard_price_per_hour' => ['nullable', 'integer', 'min:0'],
+            'ratings.*.standard_price_per_hour' => ['nullable', 'numeric', 'min:0'],
             'ratings.*.member_discount_type' => ['nullable', 'in:percent,fixed,flat'],
             'ratings.*.member_discount_value' => ['nullable', 'integer', 'min:0'],
             'hours' => ['nullable', 'array'],
             'features' => ['nullable', 'string'],
         ]);
 
+        $data['slug'] = ! empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($data['name']);
+        $data['active'] = $request->boolean('active');
+
+        // Remove extra non-column fields before updating model
+        unset($data['image'], $data['images'], $data['ratings'], $data['hours'], $data['features']);
+
+        return $data;
+    }
+
+    private function syncExtras(Request $request, Hall $hall): void
+    {
         if ($request->hasFile('image')) {
             $stored = $this->storage->storeImage($request->file('image'), 'public/halls');
             $hall->images()->create(['path' => $stored['path'], 'alt_text' => $hall->name]);
+        }
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $stored = $this->storage->storeImage($file, 'public/halls');
+                $hall->images()->create(['path' => $stored['path'], 'alt_text' => $hall->name]);
+            }
         }
 
         foreach ($request->input('ratings', []) as $dayType => $rate) {
@@ -127,7 +155,7 @@ class HallController extends Controller
             RoomRate::query()->updateOrCreate(
                 ['hall_id' => $hall->id, 'day_type' => $dayType],
                 [
-                    'standard_price_per_hour' => (int) $rate['standard_price_per_hour'],
+                    'standard_price_per_hour' => (int) round(((float) $rate['standard_price_per_hour']) * 100),
                     'member_discount_type' => $type,
                     'member_discount_value' => $value,
                 ]

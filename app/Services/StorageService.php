@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 
 class StorageService
@@ -26,14 +27,14 @@ class StorageService
         $path = trim($directory, '/').'/'.$name;
 
         $manager = new ImageManager(new Driver);
-        $image = $manager->read($file->getRealPath())->scaleDown(width: $maxWidth);
+        $image = $manager->decode($file->getRealPath())->scaleDown(width: $maxWidth);
 
-        Storage::disk(self::DISK)->put($path, (string) $image->toWebp(82));
+        Storage::disk(self::DISK)->put($path, (string) $image->encode(new WebpEncoder(82)));
 
         $thumbName = pathinfo($name, PATHINFO_FILENAME).'-thumb.webp';
         $thumbPath = trim($directory, '/').'/'.$thumbName;
-        $thumb = $manager->read($file->getRealPath())->scaleDown(width: 600);
-        Storage::disk(self::DISK)->put($thumbPath, (string) $thumb->toWebp(78));
+        $thumb = $manager->decode($file->getRealPath())->scaleDown(width: 600);
+        Storage::disk(self::DISK)->put($thumbPath, (string) $thumb->encode(new WebpEncoder(78)));
 
         return ['path' => $path, 'thumbnail' => $thumbPath];
     }
