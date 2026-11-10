@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class VatRate extends Model
 {
     protected $fillable = ['product_type', 'rate'];
+
     protected $casts = ['rate' => 'decimal:2'];
 
     public static function rateFor(string $productType): float

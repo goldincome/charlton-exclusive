@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class InvoiceLineItem extends Model
 {
     protected $fillable = ['invoice_id', 'description', 'quantity', 'unit_price', 'net', 'vat_rate', 'vat', 'gross'];
+
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'integer',

@@ -9,9 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class GalleryPhoto extends Model
 {
     public const PUBLIC = 'public';
+
     public const MEMBERS_ONLY = 'members_only';
 
     protected $fillable = ['gallery_album_id', 'title', 'path', 'thumbnail_path', 'visibility', 'alt_text', 'order'];
+
     protected $casts = ['order' => 'integer'];
 
     public function album(): BelongsTo

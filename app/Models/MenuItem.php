@@ -15,6 +15,7 @@ class MenuItem extends Model
     ];
 
     protected $fillable = ['menu_category_id', 'name', 'description', 'price', 'image_path', 'discount_exempt', 'active'];
+
     protected $casts = ['price' => 'integer', 'discount_exempt' => 'boolean', 'active' => 'boolean'];
 
     public function category(): BelongsTo

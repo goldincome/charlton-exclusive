@@ -12,14 +12,14 @@ use App\Services\PricingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class BookingController extends Controller
 {
     public function __construct(
         private BookingService $bookings,
         private PricingService $pricing,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -86,7 +86,7 @@ class BookingController extends Controller
             'guests' => ['required', 'integer', 'min:1', 'max:'.$table->capacity],
         ]);
 
-        $start = \Illuminate\Support\Carbon::parse($data['date'].' '.$data['time'], 'Europe/London')->utc();
+        $start = Carbon::parse($data['date'].' '.$data['time'], 'Europe/London')->utc();
 
         $booking = $this->bookings->request($request->user(), 'table', $table->id, [
             'start' => $start,

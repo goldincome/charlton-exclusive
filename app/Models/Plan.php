@@ -11,8 +11,7 @@ class Plan extends Model
 {
     protected $fillable = [
         'name', 'slug', 'description', 'benefits', 'entrance_fee', 'annual_fee', 'monthly_fee',
-        'price', 'billing_interval', 'min_sections', 'nominee_limit',
-        'stripe_product_id', 'stripe_price_id', 'stripe_monthly_price_id', 'stripe_annual_price_id',
+        'price', 'stripe_product_id', 'stripe_price_id', 'stripe_monthly_price_id', 'stripe_annual_price_id',
         'stripe_sync_status', 'stripe_sync_error', 'stripe_synced_at',
         'is_active', 'seo_title', 'seo_description',
     ];
@@ -23,8 +22,6 @@ class Plan extends Model
         'annual_fee' => 'integer',
         'monthly_fee' => 'integer',
         'price' => 'integer',
-        'min_sections' => 'integer',
-        'nominee_limit' => 'integer',
         'is_active' => 'boolean',
         'stripe_synced_at' => 'datetime',
     ];

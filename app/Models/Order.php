@@ -28,8 +28,23 @@ class Order extends Model
         });
     }
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function plan(): BelongsTo { return $this->belongsTo(Plan::class); }
-    public function section(): BelongsTo { return $this->belongsTo(Section::class); }
-    public function items(): HasMany { return $this->hasMany(OrderItem::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(Section::class);
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 }

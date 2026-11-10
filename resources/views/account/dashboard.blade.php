@@ -19,7 +19,7 @@
         @if ($user->membership->status === 'suspended')
             <p class="badge badge-red" style="margin-top: 12px;">Membership suspended</p>
         @elseif ($user->membership->status === 'past_due')
-            <p class="badge badge-red" style="margin-top: 12px;">Payment overdue</p>
+            <p class="badge {{ $user->membership->plan ? 'badge-green' : 'badge-red' }}" style="margin-top: 12px;">{{ $user->membership->plan ? 'Paid' : 'Payment overdue' }}</p>
         @endif
     </div>
 @endif
@@ -35,7 +35,14 @@
     </div>
     <div class="card-light">
         <h3 style="font-size: 18px; margin-bottom: 10px;">Membership</h3>
-        <p style="font-size: 32px; font-family: var(--font-display); color: var(--claret-700); margin: 0;">{{ $user->membership?->status ? ucfirst(str_replace('_', ' ', $user->membership?->status)) : 'Not a member' }}</p>
+        <p style="font-size: 32px; font-family: var(--font-display); color: var(--claret-700); margin: 0;">
+            @php
+                $ms = $user->membership?->status;
+                $hasPlan = $user->membership?->plan !== null;
+                $msDisplay = $ms === 'past_due' && $hasPlan ? 'Paid' : ($ms ? ucfirst(str_replace('_', ' ', $ms)) : 'Not a member');
+            @endphp
+            {{ $msDisplay }}
+        </p>
         @if ($user->membership?->renews_at)
             <p style="font-size: 13px; color: var(--slate-600); margin: 6px 0 0;">Renews {{ $user->membership->renews_at?->format('j M Y') }}</p>
         @endif

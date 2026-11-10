@@ -12,19 +12,33 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Application extends Model
 {
     public const DRAFT = 'draft';
+
     public const FEE_PENDING = 'fee_pending';
+
     public const SUBMITTED = 'submitted';
+
     public const AWAITING_SPONSORS = 'awaiting_sponsors';
+
     public const UNDER_REVIEW = 'under_review';
+
     public const INTERVIEW_SCHEDULED = 'interview_scheduled';
+
     public const INTERVIEW_COMPLETED = 'interview_completed';
+
     public const APPROVED = 'approved';
+
     public const FEES_NOTIFIED = 'fees_notified';
+
     public const PAYMENT_RECEIVED = 'payment_received'; // paid; must nominate sponsors before activation
+
     public const AWAITING_SPONSORS_POST_PAYMENT = 'awaiting_sponsors_post_payment';
+
     public const ACTIVE = 'active';
+
     public const REJECTED = 'rejected';
+
     public const WITHDRAWN = 'withdrawn';
+
     public const EXPIRED = 'expired';
 
     protected $fillable = [

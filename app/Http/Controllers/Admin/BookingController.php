@@ -11,9 +11,7 @@ use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    public function __construct(private BookingService $bookings)
-    {
-    }
+    public function __construct(private BookingService $bookings) {}
 
     public function index(Request $request): View
     {

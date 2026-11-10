@@ -8,9 +8,7 @@ use App\Services\StorageService;
 
 class MediaController extends Controller
 {
-    public function __construct(private StorageService $storage)
-    {
-    }
+    public function __construct(private StorageService $storage) {}
 
     public function gallery(GalleryPhoto $photo)
     {

@@ -15,6 +15,7 @@ class SyncBookableItemsCommand extends Command
     {
         $counts = $mapper->syncCoreResources();
         $this->info('Bookable items synced: '.json_encode($counts));
+
         return self::SUCCESS;
     }
 }

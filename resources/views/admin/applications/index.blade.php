@@ -24,17 +24,24 @@
     </div>
 </header>
 
-<form method="GET" action="{{ route('admin.applications.index') }}" style="margin-bottom: 20px; display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+<form method="GET" action="{{ route('admin.applications.index') }}" style="margin-bottom: 20px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+    <div>
+        <label class="field-label" for="search">Search applications</label>
+        <input type="text" class="field" id="search" name="search" value="{{ request('search') }}" placeholder="Name, email, phone, ref…" style="min-height: 48px;">
+    </div>
     <div>
         <label class="field-label" for="status_filter">Status</label>
-        <select class="field-light" id="status_filter" name="status">
+        <select class="field" id="status_filter" name="status" style="min-height: 48px;">
             <option value="">All statuses</option>
             @foreach ($statuses as $status)
                 <option value="{{ $status }}" @selected(request('status') === $status)>{{ $statusLabels[$status] ?? ucfirst(str_replace('_', ' ', $status)) }}</option>
             @endforeach
         </select>
     </div>
-    <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+    <button type="submit" class="btn btn-navy" style="min-height: 48px;">Search &amp; Filter</button>
+    @if (request('search') || request('status'))
+        <a href="{{ route('admin.applications.index') }}" class="btn btn-line-dark" style="min-height: 48px;">Reset</a>
+    @endif
 </form>
 
 <div style="display: grid; gap: 16px;">
@@ -68,9 +75,11 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #E0D5B8;">
-                <a href="{{ route('admin.applications.show', $application) }}" class="btn btn-navy btn-sm">Review application</a>
-            </div>
+            @if ($application->status !== 'active' && ! $application->user?->membership?->isActive())
+                <div style="display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #E0D5B8;">
+                    <a href="{{ route('admin.applications.show', $application) }}" class="btn btn-navy btn-sm">Review application</a>
+                </div>
+            @endif
         </div>
     @empty
         <div class="card-light">

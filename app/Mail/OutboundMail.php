@@ -20,8 +20,7 @@ class OutboundMail extends Mailable
         public string $mailSubject,
         public string $template,
         public array $data = [],
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

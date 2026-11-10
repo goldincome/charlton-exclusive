@@ -10,9 +10,7 @@ use Illuminate\Http\RedirectResponse;
 
 class BookingController extends Controller
 {
-    public function __construct(private BookingService $bookings)
-    {
-    }
+    public function __construct(private BookingService $bookings) {}
 
     public function index(): View
     {

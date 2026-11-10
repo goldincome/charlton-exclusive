@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Event;
 use App\Models\GalleryAlbum;
 use App\Models\GalleryPhoto;
 use App\Services\StorageService;
@@ -14,9 +13,7 @@ use Illuminate\Support\Str;
 
 class GalleryController extends Controller
 {
-    public function __construct(private StorageService $storage)
-    {
-    }
+    public function __construct(private StorageService $storage) {}
 
     public function index(): View
     {

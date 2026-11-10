@@ -12,13 +12,21 @@ use Illuminate\Support\Str;
 class Booking extends Model
 {
     public const REQUESTED = 'requested';
+
     public const APPROVED = 'approved';
+
     public const CONFIRMED = 'confirmed';
+
     public const CHECKED_IN = 'checked_in';
+
     public const COMPLETED = 'completed';
+
     public const REJECTED = 'rejected';
+
     public const EXPIRED = 'expired';
+
     public const CANCELLED = 'cancelled';
+
     public const NO_SHOW = 'no_show';
 
     protected $fillable = [
@@ -46,17 +54,17 @@ class Booking extends Model
         'expires_at' => 'datetime',
     ];
 
-    public function plan(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
     }
 
-    public function section(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class);
     }
 
-    public function bookableItem(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function bookableItem(): BelongsTo
     {
         return $this->belongsTo(BookableItem::class);
     }

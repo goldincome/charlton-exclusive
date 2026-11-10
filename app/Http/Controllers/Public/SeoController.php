@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppConfig;
 use App\Models\AreaPage;
 use App\Models\Event;
 use App\Models\GalleryAlbum;
@@ -15,7 +16,7 @@ class SeoController extends Controller
 {
     public function robots(): Response
     {
-        $allowTraining = \App\Models\AppConfig::bool('allow_training_crawlers', true);
+        $allowTraining = AppConfig::bool('allow_training_crawlers', true);
 
         $lines = [
             'User-agent: *',

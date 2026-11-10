@@ -3,8 +3,10 @@
 @section('content')
 @php
     $money = fn (int $pence) => '£'.number_format($pence / 100, 2);
-    $isActive = $membership && $membership->status === \App\Models\Membership::ACTIVE;
-    $planStatus = $membership?->status ?? $currentApplication?->status;
+    $hasActivePlan = $currentPlan !== null;
+    $isPastDueWithPlan = $membership && $membership->status === 'past_due' && $hasActivePlan;
+    $isActive = ($membership && $membership->status === \App\Models\Membership::ACTIVE) || $isPastDueWithPlan;
+    $planStatus = $isActive ? 'active' : ($membership?->status ?? $currentApplication?->status);
     $planBadge = $isActive
         ? 'green'
         : (in_array($planStatus, ['rejected', 'withdrawn', 'expired', 'suspended', 'terminated', 'cancelled', 'past_due'], true) ? 'red' : 'gold');
@@ -14,7 +16,7 @@
         'fees_notified' => 'Approved — payment due',
         'payment_received' => 'Payment received',
         'active' => 'Active',
-        'past_due' => 'Payment overdue',
+        'past_due' => $hasActivePlan ? 'Paid' : 'Payment overdue',
         'suspended' => 'Suspended',
         'cancelled' => 'Cancelled',
         'terminated' => 'Terminated',
@@ -22,6 +24,7 @@
         'withdrawn' => 'Withdrawn',
         'expired' => 'Expired',
     ];
+    $effectivePlanStatus = $isPastDueWithPlan ? 'past_due' : $planStatus;
     $discountLabel = function ($section) {
         $type = $section->pivot->type ?? 'percent';
         $value = (int) ($section->pivot->value ?? 0);
@@ -70,7 +73,7 @@
                     <h2 style="font-size: 30px; margin: 0 0 8px;">{{ $currentPlan->name }}</h2>
                     <p style="color: var(--mist-300); margin: 0;">{{ $currentPlan->description }}</p>
                 </div>
-                <span class="badge badge-{{ $planBadge }}">{{ $statusLabels[$planStatus] ?? ucfirst(str_replace('_', ' ', $planStatus ?? 'not started')) }}</span>
+                <span class="badge badge-{{ $planBadge }}">{{ $statusLabels[$effectivePlanStatus] ?? ucfirst(str_replace('_', ' ', $effectivePlanStatus ?? 'not started')) }}</span>
             </div>
 
             @if ($membership)
@@ -101,16 +104,27 @@
                 </p>
             @endif
 
+            @php
+                $isMonthlyMember = $membership && $membership->isMonthly();
+                $isYearlyMember = $membership && $membership->isAnnual();
+            @endphp
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; margin-top: 24px;">
-                <div>
-                    <p style="font-size: 12px; color: var(--gold-500); margin: 0 0 4px; text-transform: uppercase; letter-spacing: .06em;">Yearly fee</p>
-                    <p style="margin: 0; font-size: 20px;">{{ $money((int) $currentPlan->annual_fee) }}</p>
-                </div>
-                @if ($currentPlan->monthlyAvailable())
+                @if ($isMonthlyMember)
                     <div>
-                        <p style="font-size: 12px; color: var(--gold-500); margin: 0 0 4px; text-transform: uppercase; letter-spacing: .06em;">Or monthly</p>
+                        <p style="font-size: 12px; color: var(--gold-500); margin: 0 0 4px; text-transform: uppercase; letter-spacing: .06em;">Monthly fee</p>
                         <p style="margin: 0; font-size: 20px;">{{ $money((int) $currentPlan->monthly_fee) }}</p>
                     </div>
+                @else
+                    <div>
+                        <p style="font-size: 12px; color: var(--gold-500); margin: 0 0 4px; text-transform: uppercase; letter-spacing: .06em;">Yearly fee</p>
+                        <p style="margin: 0; font-size: 20px;">{{ $money((int) $currentPlan->annual_fee) }}</p>
+                    </div>
+                    @if ($currentPlan->monthlyAvailable() && ! $isYearlyMember)
+                        <div>
+                            <p style="font-size: 12px; color: var(--gold-500); margin: 0 0 4px; text-transform: uppercase; letter-spacing: .06em;">Or monthly</p>
+                            <p style="margin: 0; font-size: 20px;">{{ $money((int) $currentPlan->monthly_fee) }}</p>
+                        </div>
+                    @endif
                 @endif
                 <div>
                     <p style="font-size: 12px; color: var(--gold-500); margin: 0 0 4px; text-transform: uppercase; letter-spacing: .06em;">Entrance fee</p>
@@ -220,61 +234,27 @@
                         <p style="margin: 16px 0 0; font-size: 14px; color: var(--claret-700);"><strong>Reason:</strong> {{ $application->rejection_reason }}</p>
                     @endif
 
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid #E0D5B8;">
-                        <a href="{{ route('account.applications.form') }}" class="btn btn-line-dark btn-sm">Download application form</a>
-                    </div>
+                    @if ($application->invoices->isNotEmpty())
+                        <div style="margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            @foreach ($application->invoices as $invoice)
+                                <a href="{{ route('account.invoices.show', $invoice) }}" class="btn btn-line-dark btn-sm">
+                                    View invoice {{ $invoice->reference }} ({{ ucfirst($invoice->status) }})
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    @if (! in_array($application->status, ['active', 'payment_received'], true))
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 16px; border-top: 1px solid #E0D5B8;">
+                            <a href="{{ route('account.applications.form') }}" class="btn btn-line-dark btn-sm">Download application form</a>
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>
     </section>
 @endif
 
-@if ($membership && $isActive && ($higherPlans->isNotEmpty() || $samePlanSwitch))
-    <section>
-        <h2 style="font-size: 24px; margin-bottom: 6px;">Upgrade your membership</h2>
-        <p style="color: var(--slate-600); margin-bottom: 18px;">
-            Upgrade immediately with a prorated payment. You must have more than one active plan to upgrade.
-        </p>
-
-        @if ($higherPlans->isNotEmpty() && $hasMultiplePlans)
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-                @foreach ($higherPlans as $plan)
-                    <article class="card-light" style="display: flex; flex-direction: column;">
-                        <h3 style="font-size: 26px; margin: 0 0 8px;">{{ $plan->name }}</h3>
-                        <p style="color: var(--slate-600); margin-bottom: 16px;">{{ $plan->description }}</p>
-
-                        <dl style="display: grid; gap: 8px; margin: 0 0 16px; font-size: 15px;">
-                            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #E0D5B8; padding-bottom: 6px;">
-                                <dt>Yearly fee</dt>
-                                <dd style="margin: 0; font-weight: 600;">{{ $money((int) $plan->annual_fee) }}</dd>
-                            </div>
-                            @if ($plan->monthlyAvailable())
-                                <div style="display: flex; justify-content: space-between;">
-                                    <dt>Or monthly</dt>
-                                    <dd style="margin: 0; font-weight: 600;">{{ $money((int) $plan->monthly_fee) }}</dd>
-                                </div>
-                            @endif
-                        </dl>
-
-                        @if (! empty($plan->benefits))
-                            <ul style="margin: 0 0 16px 1.1rem; padding: 0; color: var(--slate-600);">
-                                @foreach ($plan->benefits as $benefit)
-                                    <li style="margin-bottom: 6px;">{{ $benefit }}</li>
-                                @endforeach
-                            </ul>
-                        @endif
-
-                        <a href="{{ route('account.membership.upgrade', ['plan' => $plan->id]) }}" class="btn btn-navy btn-sm" style="margin-top: auto; align-self: flex-start;">
-                            Upgrade to {{ $plan->name }}
-                        </a>
-                    </article>
-                @endforeach
-            </div>
-        @elseif ($higherPlans->isNotEmpty())
-            <p style="color: var(--slate-600);">Upgrades are available once the club has more than one active plan.</p>
-        @endif
-    </section>
-@endif
 
 @if (! $currentPlan && ! $currentApplication)
     <div class="card-light">

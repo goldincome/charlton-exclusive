@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Refund extends Model
 {
     protected $fillable = ['payment_id', 'user_id', 'amount', 'reason', 'stripe_refund_id', 'status'];
+
     protected $casts = ['amount' => 'integer'];
 
     public function payment(): BelongsTo

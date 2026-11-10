@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class InterviewAttendee extends Model
 {
     protected $table = 'interview_attendees';
+
     protected $fillable = ['interview_id', 'user_id'];
 
     public function interview(): BelongsTo

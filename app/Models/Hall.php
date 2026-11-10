@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -52,14 +53,14 @@ class Hall extends Model
         return $query->where('active', true);
     }
 
-    public function rateFor(\Carbon\CarbonInterface $date): ?RoomRate
+    public function rateFor(CarbonInterface $date): ?RoomRate
     {
         $dayType = BankHoliday::isBankHoliday($date) ? 'BankHoliday' : $date->format('D');
 
         return $this->rates->firstWhere('day_type', $dayType);
     }
 
-    public function openingHoursFor(\Carbon\CarbonInterface $date): ?HallHour
+    public function openingHoursFor(CarbonInterface $date): ?HallHour
     {
         return $this->hours->firstWhere('weekday', (int) $date->dayOfWeek);
     }

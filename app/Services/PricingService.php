@@ -7,7 +7,8 @@ use App\Models\Booking;
 use App\Models\Event;
 use App\Models\FoodOrder;
 use App\Models\Hall;
-use App\Models\RoomRate;
+use App\Models\PlanSectionDiscount;
+use App\Models\Section;
 use App\Models\User;
 use App\Models\VatRate;
 use Carbon\CarbonInterface;
@@ -209,10 +210,10 @@ class PricingService
 
         // Section plan discount (Dining) on use: authoritative when a rule exists for the member's plan.
         $user = $order->user;
-        $section = \App\Models\Section::query()->where('slug', 'dining')->first();
+        $section = Section::query()->where('slug', 'dining')->first();
         $planId = $user?->membership?->plan_id ?: $user?->membership?->membership_category_id;
         if ($user && $section && $planId) {
-            $rule = \App\Models\PlanSectionDiscount::query()
+            $rule = PlanSectionDiscount::query()
                 ->where('plan_id', $planId)->where('section_id', $section->id)->where('is_active', true)->first();
             if ($rule && $user->isAnnualMember() && ($section->isOpenToPublic() || $user->hasMemberAccess())) {
                 $type = $this->normalizeDiscountType($rule->type);
@@ -232,6 +233,7 @@ class PricingService
         }
 
         $legacyAmount = max(0, $original - $legacyFinal);
+
         return [
             'original_amount' => $original,
             'final_amount' => $legacyFinal,

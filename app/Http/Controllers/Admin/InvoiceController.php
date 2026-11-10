@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Models\Refund;
 use App\Models\User;
+use App\Services\InvoicePaymentService;
 use App\Services\InvoiceService;
 use App\Services\RefundService;
 use Illuminate\Contracts\View\View;
@@ -27,7 +27,7 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice): View
     {
         return view('admin.invoices.show', [
-            'invoice' => $invoice->load(['lines', 'payments.refunds', 'user']),
+            'invoice' => $invoice->load(['lines', 'payments.refunds', 'user', 'invoiceable']),
         ]);
     }
 
@@ -54,14 +54,16 @@ class InvoiceController extends Controller
     public function recordPayment(Request $request, Invoice $invoice): RedirectResponse
     {
         $data = $request->validate([
-            'amount' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
             'reference' => ['nullable', 'string', 'max:190'],
         ]);
+
+        $amountInPence = (int) round(((float) $data['amount']) * 100);
 
         Payment::query()->create([
             'invoice_id' => $invoice->id,
             'user_id' => $invoice->user_id,
-            'amount' => $data['amount'],
+            'amount' => $amountInPence,
             'currency' => 'gbp',
             'method' => 'manual',
             'status' => 'succeeded',
@@ -73,7 +75,7 @@ class InvoiceController extends Controller
 
         // Run the downstream effects (membership activation) without recording a
         // second payment or sending the online-payment receipt.
-        app(\App\Services\InvoicePaymentService::class)->fulfill($invoice);
+        app(InvoicePaymentService::class)->fulfill($invoice);
 
         return back()->with('status', 'Payment recorded.');
     }

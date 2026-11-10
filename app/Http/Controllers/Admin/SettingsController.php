@@ -14,6 +14,7 @@ use App\Models\VatRate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class SettingsController extends Controller
 {
@@ -78,7 +79,7 @@ class SettingsController extends Controller
         ]);
 
         Section::query()->create($data + [
-            'slug' => \Illuminate\Support\Str::slug($data['name']),
+            'slug' => Str::slug($data['name']),
             'recurring_annually' => true,
             'active' => true,
         ]);

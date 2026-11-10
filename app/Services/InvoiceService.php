@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class InvoiceService
 {
-    public function __construct(private PricingService $pricing)
-    {
-    }
+    public function __construct(private PricingService $pricing) {}
 
     /**
      * Issue an invoice with sequential numbering inside a locked transaction.

@@ -5,12 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Section extends Model
 {
     public const TYPE_SLOT = 'slot';
+
     public const TYPE_CART = 'cart';
+
     public const ACCESS_OPEN = 'open';
+
     public const ACCESS_MEMBERS_ONLY = 'members_only';
 
     protected $fillable = [
@@ -31,7 +35,7 @@ class Section extends Model
             ->withTimestamps();
     }
 
-    public function discounts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function discounts(): HasMany
     {
         return $this->hasMany(PlanSectionDiscount::class);
     }

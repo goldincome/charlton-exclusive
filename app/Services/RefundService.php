@@ -2,14 +2,15 @@
 
 namespace App\Services;
 
-use App\Models\AppConfig;
 use App\Models\AuditLog;
 use App\Models\Booking;
+use App\Models\DiningTable;
+use App\Models\Event;
 use App\Models\FoodOrder;
+use App\Models\Hall;
 use App\Models\Payment;
 use App\Models\Refund;
 use App\Models\User;
-use Illuminate\Support\Carbon;
 
 class RefundService
 {
@@ -26,7 +27,7 @@ class RefundService
         $hours = now()->diffInHours($booking->start_time, false);
         $type = $booking->bookingable_type;
 
-        if ($type === \App\Models\Hall::class) {
+        if ($type === Hall::class) {
             if ($hours >= 24 * 7) {
                 return 100;
             }
@@ -38,11 +39,11 @@ class RefundService
             return 0;
         }
 
-        if ($type === \App\Models\DiningTable::class) {
+        if ($type === DiningTable::class) {
             return $hours >= 24 ? 100 : 0;
         }
 
-        if ($type === \App\Models\Event::class) {
+        if ($type === Event::class) {
             return $hours >= 24 * 7 ? 100 : 0;
         }
 

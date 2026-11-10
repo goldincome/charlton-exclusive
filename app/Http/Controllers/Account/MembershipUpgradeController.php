@@ -14,9 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class MembershipUpgradeController extends Controller
 {
-    public function __construct(private MembershipUpgradeService $upgrades)
-    {
-    }
+    public function __construct(private MembershipUpgradeService $upgrades) {}
 
     public function show(Request $request): View|RedirectResponse
     {

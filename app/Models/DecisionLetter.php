@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DecisionLetter extends Model
 {
     protected $fillable = ['application_id', 'path', 'reason', 'sent_at'];
+
     protected $casts = ['sent_at' => 'datetime'];
 
     public function application(): BelongsTo

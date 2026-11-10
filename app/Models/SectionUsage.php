@@ -22,8 +22,23 @@ class SectionUsage extends Model
         'metadata' => 'array',
     ];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function plan(): BelongsTo { return $this->belongsTo(Plan::class); }
-    public function section(): BelongsTo { return $this->belongsTo(Section::class); }
-    public function usable(): MorphTo { return $this->morphTo(); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(Section::class);
+    }
+
+    public function usable(): MorphTo
+    {
+        return $this->morphTo();
+    }
 }

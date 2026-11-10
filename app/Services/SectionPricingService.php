@@ -8,9 +8,7 @@ use App\Models\User;
 
 class SectionPricingService
 {
-    public function __construct(private PricingService $pricing)
-    {
-    }
+    public function __construct(private PricingService $pricing) {}
 
     /**
      * Calculate the member discount for using a section (applied per use, not yearly).

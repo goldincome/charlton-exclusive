@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class MenuCategory extends Model
 {
     protected $fillable = ['name', 'order', 'active'];
+
     protected $casts = ['order' => 'integer', 'active' => 'boolean'];
 
     public function items(): HasMany

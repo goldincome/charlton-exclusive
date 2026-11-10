@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class LegalAcceptance extends Model
 {
     protected $fillable = ['user_id', 'legal_document_id', 'version', 'accepted_at'];
+
     protected $casts = ['accepted_at' => 'datetime'];
 
     public function user(): BelongsTo

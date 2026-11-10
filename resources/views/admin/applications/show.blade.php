@@ -25,7 +25,9 @@
     <a href="{{ $isAdmin ? route('admin.applications.index') : route('committee.applications.index') }}" class="link-claret" style="font-size: 14px;">← Back to applications</a>
     <h1 style="font-size: 32px; margin: 12px 0 8px;">{{ $application->user->name }}</h1>
     <p style="color: var(--slate-600);">
-        Plan: {{ $plan?->name ?? 'Not selected' }} · Ref: {{ $application->reference }} ·
+        Plan: {{ $plan?->name ?? 'Not selected' }} ·
+        Billing frequency: {{ $application->billing_frequency ? ucfirst($application->billing_frequency) . ($application->billing_frequency === 'annual' ? ' (Yearly)' : ' (Monthly)') : 'Not selected' }} ·
+        Ref: {{ $application->reference }} ·
         Status: {{ $statusLabels[$application->status] ?? ucfirst(str_replace('_', ' ', $application->status)) }}
     </p>
 </header>
@@ -64,6 +66,10 @@
                 <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
                     <dt style="color: var(--slate-600);">Profession</dt>
                     <dd style="margin: 0;">{{ $application->profession ?? '—' }}</dd>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
+                    <dt style="color: var(--slate-600);">Billing frequency</dt>
+                    <dd style="margin: 0; font-weight: 600;">{{ $application->billing_frequency ? ucfirst($application->billing_frequency) . ($application->billing_frequency === 'annual' ? ' (Yearly)' : ' (Monthly)') : 'Not selected' }}</dd>
                 </div>
                 <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
                     <dt style="color: var(--slate-600);">ID type</dt>

@@ -10,8 +10,11 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Invoice extends Model
 {
     public const UNPAID = 'unpaid';
+
     public const PAID = 'paid';
+
     public const REFUNDED = 'refunded';
+
     public const VOID = 'void';
 
     protected $fillable = [

@@ -5,16 +5,18 @@
     $money = fn (int $pence) => '£'.number_format($pence / 100, 2);
     $membership = $user->membership;
     $profile = $user->memberProfile;
+    $hasActivePlan = $membership?->plan !== null;
+    $isPastDueWithPlan = $membership && $membership->status === 'past_due' && $hasActivePlan;
     $statusLabels = [
         'pending' => 'Pending',
         'active' => 'Active',
-        'past_due' => 'Payment overdue',
+        'past_due' => $hasActivePlan ? 'Paid' : 'Payment overdue',
         'suspended' => 'Suspended',
         'terminated' => 'Terminated',
         'cancelled' => 'Cancelled',
     ];
     $status = $membership?->status;
-    $badge = $status === 'active' ? 'green' : (in_array($status, ['cancelled', 'terminated', 'suspended', 'past_due'], true) ? 'red' : 'gold');
+    $badge = ($status === 'active' || $isPastDueWithPlan) ? 'green' : (in_array($status, ['cancelled', 'terminated', 'suspended'], true) ? 'red' : 'gold');
 @endphp
 
 <header style="margin-bottom: 32px;">

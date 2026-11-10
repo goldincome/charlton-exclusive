@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceLineItem;
 use App\Models\Membership;
 use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Cashier;
@@ -301,7 +302,7 @@ class MembershipBillingService
             $stripeCustomerId = $stripeInvoice->customer ?? null;
 
             if ($stripeCustomerId) {
-                return \App\Models\User::query()->where('stripe_id', $stripeCustomerId)->value('id');
+                return User::query()->where('stripe_id', $stripeCustomerId)->value('id');
             }
         } catch (\Throwable $e) {
             Log::warning('Could not resolve user for Stripe invoice', ['error' => $e->getMessage()]);

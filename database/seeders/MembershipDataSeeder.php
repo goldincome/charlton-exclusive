@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\MembershipCategory;
 use App\Models\Section;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class MembershipDataSeeder extends Seeder
 {
@@ -74,9 +73,7 @@ class MembershipDataSeeder extends Seeder
                 'entrance_fee' => 100000, // £1,000
                 'annual_fee' => 120000, // £1,200
                 'monthly_fee' => 11000, // £110
-                'min_sections' => 2,
-                'nominee_limit' => 0,
-                'active' => true,
+                'is_active' => true,
             ],
             [
                 'name' => 'Associate Membership',
@@ -90,9 +87,7 @@ class MembershipDataSeeder extends Seeder
                 'entrance_fee' => 50000, // £500
                 'annual_fee' => 80000, // £800
                 'monthly_fee' => 7500, // £75
-                'min_sections' => 2,
-                'nominee_limit' => 0,
-                'active' => true,
+                'is_active' => true,
             ],
             [
                 'name' => 'Young Professional',
@@ -106,9 +101,7 @@ class MembershipDataSeeder extends Seeder
                 'entrance_fee' => 25000, // £250
                 'annual_fee' => 50000, // £500
                 'monthly_fee' => 4500, // £45
-                'min_sections' => 2,
-                'nominee_limit' => 0,
-                'active' => true,
+                'is_active' => true,
             ],
         ];
 

@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Account\ApplicationController;
+use App\Http\Controllers\Account\CartController;
 use App\Http\Controllers\Account\DashboardController;
 use App\Http\Controllers\Account\InvoiceController;
 use App\Http\Controllers\Account\MembershipUpgradeController;
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
+use App\Http\Controllers\Admin\BookableItemController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -14,7 +16,9 @@ use App\Http\Controllers\Admin\HallController;
 use App\Http\Controllers\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\MenuController;
+use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FoodOrderController;
@@ -108,12 +112,12 @@ Route::middleware(['auth', 'verified', 'noindex'])->prefix('account')->name('acc
     Route::post('/food-orders', [FoodOrderController::class, 'store'])->name('food-orders.store');
     Route::get('/food-orders/{foodOrder}', [FoodOrderController::class, 'show'])->name('food-orders.show');
 
-    Route::get('/cart', [\App\Http\Controllers\Account\CartController::class, 'index'])->name('cart.index');
-    Route::get('/services', [\App\Http\Controllers\Account\CartController::class, 'services'])->name('services.index');
-    Route::post('/cart/add/{item}', [\App\Http\Controllers\Account\CartController::class, 'add'])->name('cart.add');
-    Route::post('/cart/remove/{item}', [\App\Http\Controllers\Account\CartController::class, 'remove'])->name('cart.remove');
-    Route::post('/cart/checkout', [\App\Http\Controllers\Account\CartController::class, 'checkout'])->name('cart.checkout');
-    Route::get('/cart/success', [\App\Http\Controllers\Account\CartController::class, 'success'])->name('cart.success');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::get('/services', [CartController::class, 'services'])->name('services.index');
+    Route::post('/cart/add/{item}', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/remove/{item}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::get('/cart/success', [CartController::class, 'success'])->name('cart.success');
 
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
@@ -240,11 +244,11 @@ Route::middleware(['auth', 'verified', 'noindex', 'role:admin'])->prefix('admin'
     Route::get('/legal', [SettingsController::class, 'legal'])->name('legal.index');
     Route::post('/legal', [SettingsController::class, 'storeLegal'])->name('legal.store');
 
-    Route::resource('sections', \App\Http\Controllers\Admin\SectionController::class)->except(['show', 'destroy']);
-    Route::post('/sections/{section}/pause', [\App\Http\Controllers\Admin\SectionController::class, 'togglePause'])->name('sections.pause');
-    Route::resource('bookable-items', \App\Http\Controllers\Admin\BookableItemController::class)->except(['show', 'destroy']);
-    Route::resource('plans', \App\Http\Controllers\Admin\PlanController::class)->except(['show', 'destroy']);
-    Route::post('/plans/{plan}/sync', [\App\Http\Controllers\Admin\PlanController::class, 'sync'])->name('plans.sync');
+    Route::resource('sections', SectionController::class)->except(['show', 'destroy']);
+    Route::post('/sections/{section}/pause', [SectionController::class, 'togglePause'])->name('sections.pause');
+    Route::resource('bookable-items', BookableItemController::class)->except(['show', 'destroy']);
+    Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
+    Route::post('/plans/{plan}/sync', [PlanController::class, 'sync'])->name('plans.sync');
 });
 
 /*

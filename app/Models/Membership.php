@@ -5,17 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Membership extends Model
 {
     public const ANNUAL = 'annual';
+
     public const MONTHLY = 'monthly';
 
     public const PENDING = 'pending';
+
     public const ACTIVE = 'active';
+
     public const PAST_DUE = 'past_due';
+
     public const SUSPENDED = 'suspended';
+
     public const TERMINATED = 'terminated';
+
     public const CANCELLED = 'cancelled';
 
     protected $fillable = [
@@ -52,7 +59,7 @@ class Membership extends Model
         return $this->hasMany(MembershipPerson::class);
     }
 
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function invoices(): MorphMany
     {
         return $this->morphMany(Invoice::class, 'invoiceable');
     }

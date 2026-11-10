@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Services\PricingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class EventController extends Controller
 
     public function create(): View
     {
-        return view('admin.events.form', ['event' => new Event()]);
+        return view('admin.events.form', ['event' => new Event]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -77,7 +78,7 @@ class EventController extends Controller
             'active' => ['boolean'],
         ]);
 
-        $data['member_discount_type'] = app(\App\Services\PricingService::class)->normalizeDiscountType($data['member_discount_type']);
+        $data['member_discount_type'] = app(PricingService::class)->normalizeDiscountType($data['member_discount_type']);
         if ($data['member_discount_type'] === 'percent') {
             $data['member_discount_value'] = min(100, max(0, (int) $data['member_discount_value']));
         } else {

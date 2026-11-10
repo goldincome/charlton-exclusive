@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Interview;
+use App\Models\Plan;
 use App\Services\MembershipService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -13,16 +14,26 @@ use Illuminate\Support\Facades\Storage;
 
 class ApplicationController extends Controller
 {
-    public function __construct(private MembershipService $memberships)
-    {
-    }
+    public function __construct(private MembershipService $memberships) {}
 
     public function index(Request $request): View
     {
+        $search = trim($request->query('search', ''));
+
         return view('admin.applications.index', [
             'applications' => Application::query()
-                ->with(['user', 'plan', 'category'])
+                ->with(['user.membership', 'plan', 'category'])
                 ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
+                ->when($search, function ($q, $search) {
+                    $q->where(function ($sub) use ($search) {
+                        $sub->where('reference', 'like', "%{$search}%")
+                            ->orWhereHas('user', function ($userQuery) use ($search) {
+                                $userQuery->where('name', 'like', "%{$search}%")
+                                    ->orWhere('email', 'like', "%{$search}%")
+                                    ->orWhere('phone', 'like', "%{$search}%");
+                            });
+                    });
+                })
                 ->latest()
                 ->paginate(20)
                 ->withQueryString(),
@@ -48,7 +59,7 @@ class ApplicationController extends Controller
 
         return view('admin.applications.show', [
             'application' => $application,
-            'plans' => \App\Models\Plan::query()->active()->orderBy('annual_fee')->get(),
+            'plans' => Plan::query()->active()->orderBy('annual_fee')->get(),
         ]);
     }
 

@@ -10,11 +10,17 @@ use Illuminate\Support\Str;
 class FoodOrder extends Model
 {
     public const REQUESTED = 'requested';
+
     public const APPROVED = 'approved';
+
     public const CONFIRMED = 'confirmed';
+
     public const FULFILLED = 'fulfilled';
+
     public const REJECTED = 'rejected';
+
     public const EXPIRED = 'expired';
+
     public const CANCELLED = 'cancelled';
 
     protected $fillable = [

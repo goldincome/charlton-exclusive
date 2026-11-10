@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\BankHoliday;
 use App\Models\Hall;
 use App\Models\HallFeature;
 use App\Models\HallHour;
+use App\Models\Redirect;
 use App\Models\RoomRate;
+use App\Services\PricingService;
 use App\Services\StorageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -17,9 +18,7 @@ use Illuminate\Validation\Rule;
 
 class HallController extends Controller
 {
-    public function __construct(private StorageService $storage)
-    {
-    }
+    public function __construct(private StorageService $storage) {}
 
     public function index(): View
     {
@@ -30,7 +29,7 @@ class HallController extends Controller
 
     public function create(): View
     {
-        return view('admin.halls.form', ['hall' => new Hall()]);
+        return view('admin.halls.form', ['hall' => new Hall]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -55,7 +54,7 @@ class HallController extends Controller
         $hall->update($this->validated($request, $hall));
 
         if ($oldSlug !== $hall->slug) {
-            \App\Models\Redirect::query()->updateOrCreate(
+            Redirect::query()->updateOrCreate(
                 ['from_path' => '/meeting-rooms/'.$oldSlug.'/'],
                 ['to_path' => '/meeting-rooms/'.$hall->slug.'/', 'status_code' => 301]
             );
@@ -115,10 +114,11 @@ class HallController extends Controller
         foreach ($request->input('ratings', []) as $dayType => $rate) {
             if (! isset($rate['standard_price_per_hour']) || $rate['standard_price_per_hour'] === '') {
                 $hall->rates()->where('day_type', $dayType)->delete();
+
                 continue;
             }
 
-            $type = app(\App\Services\PricingService::class)->normalizeDiscountType($rate['member_discount_type'] ?? 'percent');
+            $type = app(PricingService::class)->normalizeDiscountType($rate['member_discount_type'] ?? 'percent');
             $value = (int) ($rate['member_discount_value'] ?? 0);
             if ($type === 'percent') {
                 $value = min(100, max(0, $value));
@@ -137,6 +137,7 @@ class HallController extends Controller
         foreach ($request->input('hours', []) as $weekday => $hours) {
             if (empty($hours['opens_at']) || empty($hours['closes_at'])) {
                 $hall->hours()->where('weekday', $weekday)->delete();
+
                 continue;
             }
 

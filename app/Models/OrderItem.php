@@ -20,7 +20,18 @@ class OrderItem extends Model
         'final_amount' => 'integer',
     ];
 
-    public function order(): BelongsTo { return $this->belongsTo(Order::class); }
-    public function item(): BelongsTo { return $this->belongsTo(BookableItem::class, 'bookable_item_id'); }
-    public function section(): BelongsTo { return $this->belongsTo(Section::class); }
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function item(): BelongsTo
+    {
+        return $this->belongsTo(BookableItem::class, 'bookable_item_id');
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(Section::class);
+    }
 }

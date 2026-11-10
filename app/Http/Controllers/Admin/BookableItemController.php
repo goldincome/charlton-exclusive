@@ -26,6 +26,7 @@ class BookableItemController extends Controller
     public function store(Request $request): RedirectResponse
     {
         BookableItem::query()->create($this->validated($request));
+
         return redirect()->route('admin.bookable-items.index')->with('status', 'Bookable item created.');
     }
 
@@ -37,6 +38,7 @@ class BookableItemController extends Controller
     public function update(Request $request, BookableItem $bookableItem): RedirectResponse
     {
         $bookableItem->update($this->validated($request));
+
         return back()->with('status', 'Bookable item updated.');
     }
 
@@ -53,6 +55,7 @@ class BookableItemController extends Controller
         ]);
         $data['price'] = (int) round(((float) $data['price']) * 100);
         $data['is_active'] = $request->boolean('is_active');
+
         return $data;
     }
 }

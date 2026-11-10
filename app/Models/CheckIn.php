@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class CheckIn extends Model
 {
     protected $fillable = ['checkable_type', 'checkable_id', 'checked_in_by', 'checked_in_at'];
+
     protected $casts = ['checked_in_at' => 'datetime'];
 
     public function checkable(): MorphTo

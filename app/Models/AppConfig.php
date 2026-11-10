@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 class AppConfig extends Model
 {
     protected $table = 'app_config';
+
     protected $fillable = ['key', 'value', 'type', 'description'];
 
     protected static function booted(): void
@@ -39,12 +40,14 @@ class AppConfig extends Model
     public static function bool(string $key, bool $default = false): bool
     {
         $value = static::get($key);
+
         return is_null($value) ? $default : filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     public static function int(string $key, int $default = 0): int
     {
         $value = static::get($key);
+
         return is_null($value) ? $default : (int) $value;
     }
 }

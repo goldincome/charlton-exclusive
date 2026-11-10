@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class NotificationOutbox extends Model
 {
     protected $table = 'notification_outbox';
+
     protected $fillable = ['user_id', 'to_email', 'subject', 'template', 'status', 'error', 'sent_at'];
+
     protected $casts = ['sent_at' => 'datetime'];
 
     public function user(): BelongsTo

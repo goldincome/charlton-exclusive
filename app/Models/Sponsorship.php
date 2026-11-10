@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Sponsorship extends Model
 {
     public const PENDING = 'pending';
+
     public const ACCEPTED = 'accepted';
+
     public const DECLINED = 'declined';
+
     public const WITHDRAWN = 'withdrawn';
 
     protected $fillable = ['application_id', 'sponsor_id', 'status', 'reason', 'responded_at'];

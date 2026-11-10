@@ -108,11 +108,19 @@ return new class extends Migration
         Schema::dropIfExists('cart_items');
         Schema::table('bookings', function (Blueprint $table) {
             foreach (['stripe_session_id', 'final_amount', 'original_amount'] as $col) {
-                if (Schema::hasColumn('bookings', $col)) $table->dropColumn($col);
+                if (Schema::hasColumn('bookings', $col)) {
+                    $table->dropColumn($col);
+                }
             }
-            if (Schema::hasColumn('bookings', 'plan_id')) $table->dropConstrainedForeignId('plan_id');
-            if (Schema::hasColumn('bookings', 'bookable_item_id')) $table->dropConstrainedForeignId('bookable_item_id');
-            if (Schema::hasColumn('bookings', 'section_id')) $table->dropConstrainedForeignId('section_id');
+            if (Schema::hasColumn('bookings', 'plan_id')) {
+                $table->dropConstrainedForeignId('plan_id');
+            }
+            if (Schema::hasColumn('bookings', 'bookable_item_id')) {
+                $table->dropConstrainedForeignId('bookable_item_id');
+            }
+            if (Schema::hasColumn('bookings', 'section_id')) {
+                $table->dropConstrainedForeignId('section_id');
+            }
         });
         Schema::dropIfExists('bookable_items');
     }

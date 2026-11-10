@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Interview extends Model
 {
     public const ELIGIBLE = 'eligible';
+
     public const INELIGIBLE = 'ineligible';
 
     protected $fillable = ['application_id', 'scheduled_at', 'location', 'notes', 'recommendation'];

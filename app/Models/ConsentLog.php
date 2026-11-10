@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ConsentLog extends Model
 {
     protected $fillable = ['user_id', 'session_id', 'categories', 'ip_address'];
+
     protected $casts = ['categories' => 'array'];
 
     public function user(): BelongsTo

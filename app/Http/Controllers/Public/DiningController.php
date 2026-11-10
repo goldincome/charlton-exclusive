@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\MenuCategory;
+use App\Models\MenuItem;
 use Illuminate\Contracts\View\View;
 
 class DiningController extends Controller
@@ -15,7 +16,7 @@ class DiningController extends Controller
                 ->with(['items' => fn ($q) => $q->where('active', true)->with('allergenFlags')])
                 ->orderBy('order')
                 ->get(),
-            'allergens' => \App\Models\MenuItem::ALLERGENS,
+            'allergens' => MenuItem::ALLERGENS,
         ]);
     }
 }

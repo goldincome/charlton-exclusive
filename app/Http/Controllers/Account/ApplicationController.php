@@ -7,6 +7,7 @@ use App\Models\Application;
 use App\Models\Invoice;
 use App\Models\Membership;
 use App\Models\Plan;
+use App\Services\InvoicePaymentService;
 use App\Services\InvoiceService;
 use App\Services\MembershipService;
 use App\Services\MembershipUpgradeService;
@@ -16,7 +17,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Cashier\Cashier;
@@ -33,8 +33,7 @@ class ApplicationController extends Controller
         private MembershipService $memberships,
         private InvoiceService $invoices,
         private MembershipUpgradeService $upgrades,
-    ) {
-    }
+    ) {}
 
     /**
      * Onboarding page shown to new registrations.
@@ -63,7 +62,7 @@ class ApplicationController extends Controller
 
         $applications = $user->applications()->with([
             'plan.sections',
-            'invoices' => fn ($q) => $q->where('status', Invoice::UNPAID)->latest('id'),
+            'invoices' => fn ($q) => $q->latest('id'),
         ])->latest()->get();
 
         $membership = $user->membership()->with('plan.sections')->first();
@@ -323,7 +322,7 @@ class ApplicationController extends Controller
 
                 if (in_array($session->payment_status ?? null, ['paid', 'no_payment_required'], true)
                     && ($sessionInvoiceId === '' || $sessionInvoiceId === (string) $invoice->id)) {
-                    app(\App\Services\InvoicePaymentService::class)->fulfill(
+                    app(InvoicePaymentService::class)->fulfill(
                         $invoice,
                         $session->payment_intent ?? null,
                         $session->id ?? null,

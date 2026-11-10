@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PricingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -24,7 +25,7 @@ class RoomRate extends Model
 
     public function memberPricePerHour(): int
     {
-        return app(\App\Services\PricingService::class)->applyDiscount(
+        return app(PricingService::class)->applyDiscount(
             (int) $this->standard_price_per_hour,
             (string) $this->member_discount_type,
             (int) $this->member_discount_value

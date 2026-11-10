@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CartItem;
 use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\User;
-use App\Services\BookingService;
-use App\Services\MembershipService;
+use App\Models\Membership;
+use App\Models\Order;
+use App\Models\Plan;
+use App\Models\SectionUsage;
+use App\Models\StripeEvent;
+use App\Services\InvoicePaymentService;
+use App\Services\MembershipBillingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Cashier;
-use Stripe\StripeClient;
+use Stripe\Webhook;
 
 class StripeController extends Controller
 {
@@ -64,7 +68,7 @@ class StripeController extends Controller
 
                 if ($invoiceId && ($session->payment_status ?? null) === 'paid'
                     && ($invoice = Invoice::query()->find($invoiceId))) {
-                    app(\App\Services\InvoicePaymentService::class)->fulfill(
+                    app(InvoicePaymentService::class)->fulfill(
                         $invoice,
                         $session->payment_intent ?? null,
                         $session->id ?? null,
@@ -95,7 +99,7 @@ class StripeController extends Controller
 
         if ($secret) {
             try {
-                $event = \Stripe\Webhook::constructEvent($payload, $signature, $secret);
+                $event = Webhook::constructEvent($payload, $signature, $secret);
             } catch (\Throwable $e) {
                 Log::warning('Stripe webhook signature failed: '.$e->getMessage());
 
@@ -111,11 +115,11 @@ class StripeController extends Controller
             return response('Malformed event', 400);
         }
 
-        if (\App\Models\StripeEvent::query()->where('stripe_event_id', $eventId)->exists()) {
+        if (StripeEvent::query()->where('stripe_event_id', $eventId)->exists()) {
             return response('Already processed', 200);
         }
 
-        \App\Models\StripeEvent::query()->create([
+        StripeEvent::query()->create([
             'stripe_event_id' => $eventId,
             'type' => $event->type,
             'payload' => $payload,
@@ -129,7 +133,7 @@ class StripeController extends Controller
     private function handle(object $event): void
     {
         $type = $event->type;
-        $billing = app(\App\Services\MembershipBillingService::class);
+        $billing = app(MembershipBillingService::class);
 
         if (in_array($type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
             $session = $event->data->object;
@@ -137,14 +141,16 @@ class StripeController extends Controller
             $invoiceId = $metadata['invoice_id'] ?? null;
             $orderId = $metadata['order_id'] ?? null;
 
-            if ($orderId && ($order = \App\Models\Order::query()->with('items')->find($orderId)) && $order->status !== 'paid') {
+            if ($orderId && ($order = Order::query()->with('items')->find($orderId)) && $order->status !== 'paid') {
                 $order->update(['status' => 'paid', 'stripe_session_id' => $session->id ?? $order->stripe_session_id]);
-                \App\Models\CartItem::query()->where('user_id', $order->user_id)->delete();
+                CartItem::query()->where('user_id', $order->user_id)->delete();
                 try {
                     foreach ($order->items->groupBy('section_id') as $sectionId => $items) {
-                        if (! $sectionId) continue;
-                        \App\Models\SectionUsage::query()->updateOrCreate(
-                            ['usable_type' => \App\Models\Order::class, 'usable_id' => $order->id, 'section_id' => (int) $sectionId],
+                        if (! $sectionId) {
+                            continue;
+                        }
+                        SectionUsage::query()->updateOrCreate(
+                            ['usable_type' => Order::class, 'usable_id' => $order->id, 'section_id' => (int) $sectionId],
                             [
                                 'user_id' => $order->user_id,
                                 'plan_id' => $order->plan_id,
@@ -170,7 +176,7 @@ class StripeController extends Controller
                     $invoice->user->forceFill(['stripe_id' => $customerId])->save();
                 }
 
-                app(\App\Services\InvoicePaymentService::class)->fulfill(
+                app(InvoicePaymentService::class)->fulfill(
                     $invoice,
                     $session->payment_intent ?? null,
                     $session->id ?? null,
@@ -204,13 +210,13 @@ class StripeController extends Controller
         if (in_array($type, ['product.updated', 'price.created', 'price.updated'], true)) {
             $object = $event->data->object;
             $planId = $object->metadata->plan_id ?? null;
-            if ($planId && ($plan = \App\Models\Plan::query()->find($planId))) {
+            if ($planId && ($plan = Plan::query()->find($planId))) {
                 $updates = ['stripe_sync_status' => 'synced', 'stripe_synced_at' => now(), 'stripe_sync_error' => null];
                 if ($type === 'product.updated') {
                     $updates['stripe_product_id'] = $object->id;
                 } else {
                     $frequency = $object->metadata->frequency ?? null;
-                    if ($frequency === \App\Models\Membership::MONTHLY) {
+                    if ($frequency === Membership::MONTHLY) {
                         $updates['stripe_monthly_price_id'] = $object->id;
                     } else {
                         $updates['stripe_annual_price_id'] = $object->id;
@@ -226,6 +232,6 @@ class StripeController extends Controller
             Log::critical('Stripe dispute created', ['event' => $event->id]);
         }
 
-        \App\Models\StripeEvent::query()->where('stripe_event_id', $event->id)->update(['processed_at' => now()]);
+        StripeEvent::query()->where('stripe_event_id', $event->id)->update(['processed_at' => now()]);
     }
 }

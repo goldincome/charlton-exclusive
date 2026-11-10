@@ -41,7 +41,7 @@ class SlotManager
      *
      * @param  array<int, string>  $slots
      *
-     * @throws \Illuminate\Database\UniqueConstraintViolationException
+     * @throws UniqueConstraintViolationException
      */
     public function reserve(string $resourceType, int $resourceId, array $slots, Booking $booking): void
     {

@@ -15,9 +15,7 @@ class SyncPlanToStripe implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $planId)
-    {
-    }
+    public function __construct(public int $planId) {}
 
     public function handle(StripePriceService $prices): void
     {

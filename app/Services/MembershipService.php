@@ -8,6 +8,7 @@ use App\Models\Membership;
 use App\Models\MembershipPerson;
 use App\Models\Plan;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -100,7 +101,6 @@ class MembershipService
 
         $application->update([
             'plan_id' => $plan->id,
-            'membership_category_id' => $plan->id,
             'status' => Application::FEES_NOTIFIED,
             'approved_at' => now(),
             'rejection_reason' => null,
@@ -381,13 +381,13 @@ class MembershipService
         return '£'.number_format($pence / 100, 2);
     }
 
-    private function periodEnd(object $subscription): ?\Illuminate\Support\Carbon
+    private function periodEnd(object $subscription): ?Carbon
     {
         $timestamp = $subscription->current_period_end
             ?? $subscription->items->data[0]->current_period_end
             ?? null;
 
-        return $timestamp ? \Illuminate\Support\Carbon::createFromTimestamp($timestamp) : null;
+        return $timestamp ? Carbon::createFromTimestamp($timestamp) : null;
     }
 
     private function audit(object $subject, string $action, array $newValues = []): void

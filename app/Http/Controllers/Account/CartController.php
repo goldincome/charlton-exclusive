@@ -14,13 +14,12 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Laravel\Cashier\Cashier;
 
 class CartController extends Controller
 {
-    public function __construct(private SectionPricingService $sectionPricing, private PricingService $pricing)
-    {
-    }
+    public function __construct(private SectionPricingService $sectionPricing, private PricingService $pricing) {}
 
     public function index(Request $request): View
     {
@@ -70,6 +69,7 @@ class CartController extends Controller
     public function remove(Request $request, BookableItem $item): RedirectResponse
     {
         CartItem::query()->where('user_id', $request->user()->id)->where('bookable_item_id', $item->id)->delete();
+
         return back()->with('status', 'Removed from cart.');
     }
 
@@ -110,7 +110,7 @@ class CartController extends Controller
                 $subtotal = $lines->sum(fn ($line) => (int) $line->item->price * (int) $line->quantity);
                 $quote = $this->sectionPricing->quote($user, $section, $subtotal);
                 if (! ($quote['allowed'] ?? true)) {
-                    throw \Illuminate\Validation\ValidationException::withMessages(['cart' => $quote['reason'] ?? 'Unable to price cart.']);
+                    throw ValidationException::withMessages(['cart' => $quote['reason'] ?? 'Unable to price cart.']);
                 }
                 $ratio = $subtotal > 0 ? (($quote['final_amount'] ?? $subtotal) / $subtotal) : 1;
                 foreach ($lines as $line) {
@@ -136,6 +136,7 @@ class CartController extends Controller
             }
 
             $order->update($totals + ['discount_type' => $primaryDiscountType, 'discount_value' => $primaryDiscountValue]);
+
             return $order->refresh();
         });
 
@@ -158,6 +159,7 @@ class CartController extends Controller
                     ]
                 );
             }
+
             return redirect()->route('account.cart.index')->with('status', 'Order confirmed (no payment required).');
         }
 
@@ -182,6 +184,7 @@ class CartController extends Controller
         ]);
 
         $order->update(['stripe_session_id' => $session->id]);
+
         return redirect($session->url);
     }
 

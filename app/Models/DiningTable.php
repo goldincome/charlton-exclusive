@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DiningTable extends Model
 {
     protected $fillable = ['number', 'capacity', 'section', 'table_category_id', 'active'];
+
     protected $casts = ['capacity' => 'integer', 'active' => 'boolean'];
 
     public function category(): BelongsTo

@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class ContactMessage extends Model
 {
     protected $fillable = ['name', 'email', 'phone', 'message', 'handled'];
+
     protected $casts = ['handled' => 'boolean'];
 }

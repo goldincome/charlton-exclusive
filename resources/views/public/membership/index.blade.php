@@ -61,12 +61,11 @@
                         </ul>
                     @endif
 
-                    <p style="font-size: 14px; color: var(--slate-600); margin-bottom: 16px;">
-                        Minimum {{ $category->min_sections }} sections.
-                        @if ($category->sections->isNotEmpty())
+                    @if ($category->sections->isNotEmpty())
+                        <p style="font-size: 14px; color: var(--slate-600); margin-bottom: 16px;">
                             Includes {{ $category->sections->pluck('name')->join(', ') }}.
-                        @endif
-                    </p>
+                        </p>
+                    @endif
 
                     <a href="{{ route('account.applications.start') }}" class="btn btn-navy btn-sm" style="margin-top: auto; justify-self: start;">Apply for {{ $category->name }}</a>
                 </article>

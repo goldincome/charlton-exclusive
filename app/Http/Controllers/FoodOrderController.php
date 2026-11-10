@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\FoodOrder;
+use App\Models\Hall;
 use App\Models\MenuItem;
 use App\Services\PricingService;
 use App\Services\SectionUsageRecorder;
@@ -11,12 +12,11 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FoodOrderController extends Controller
 {
-    public function __construct(private PricingService $pricing, private SectionUsageRecorder $sectionUsage)
-    {
-    }
+    public function __construct(private PricingService $pricing, private SectionUsageRecorder $sectionUsage) {}
 
     public function index(Request $request): View
     {
@@ -31,7 +31,7 @@ class FoodOrderController extends Controller
             'items' => MenuItem::query()->active()->with('category')->orderBy('name')->get(),
             'hallBookings' => auth()->user()->bookings()
                 ->where('status', Booking::CONFIRMED)
-                ->where('bookingable_type', \App\Models\Hall::class)
+                ->where('bookingable_type', Hall::class)
                 ->where('start_time', '>=', now())
                 ->get(),
         ]);
@@ -82,7 +82,7 @@ class FoodOrderController extends Controller
             try {
                 $this->sectionUsage->recordFoodOrder($order, $quote);
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('Food order section usage recording failed', ['food_order_id' => $order->id, 'error' => $e->getMessage()]);
+                Log::warning('Food order section usage recording failed', ['food_order_id' => $order->id, 'error' => $e->getMessage()]);
             }
 
             return $order;

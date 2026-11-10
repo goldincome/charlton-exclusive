@@ -5,8 +5,8 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class StorageService
 {
@@ -25,7 +25,7 @@ class StorageService
         $name = Str::random(40).'.webp';
         $path = trim($directory, '/').'/'.$name;
 
-        $manager = new ImageManager(new Driver());
+        $manager = new ImageManager(new Driver);
         $image = $manager->read($file->getRealPath())->scaleDown(width: $maxWidth);
 
         Storage::disk(self::DISK)->put($path, (string) $image->toWebp(82));

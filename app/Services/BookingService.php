@@ -5,12 +5,15 @@ namespace App\Services;
 use App\Models\AppConfig;
 use App\Models\AuditLog;
 use App\Models\Booking;
+use App\Models\DiningTable;
+use App\Models\Event;
 use App\Models\Hall;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
@@ -18,8 +21,7 @@ class BookingService
     public function __construct(
         private SlotManager $slots,
         private PricingService $pricing,
-    ) {
-    }
+    ) {}
 
     /**
      * Create a booking request under a pessimistic lock plus the booking_slot
@@ -72,10 +74,10 @@ class BookingService
             $bookableItemId = $sectionQuote['bookable_item_id'];
             $planId = $sectionQuote['plan_id'] ?: $planId;
         } elseif ($resourceType === 'event') {
-            $event = \App\Models\Event::query()->findOrFail($resourceId);
+            $event = Event::query()->findOrFail($resourceId);
             $tickets = max(1, (int) ($data['guests'] ?? 1));
             $originalAmount = (int) $event->price_per_ticket * $tickets;
-            $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => \App\Models\Event::class, 'bookingable_id' => $event->id]), $originalAmount);
+            $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => Event::class, 'bookingable_id' => $event->id]), $originalAmount);
             $price = $sectionQuote['discount_amount'] > 0 ? $sectionQuote['final_amount'] : $this->pricing->eventTicketPrice($event, $user->canGetMemberRates(), $tickets);
             if ($sectionQuote['discount_amount'] > 0) {
                 $discountType = $sectionQuote['discount_type'];
@@ -92,10 +94,10 @@ class BookingService
             $bookableItemId = $sectionQuote['bookable_item_id'];
             $planId = $sectionQuote['plan_id'] ?: $planId;
         } elseif ($resourceType === 'table') {
-            $table = \App\Models\DiningTable::query()->with('category')->findOrFail($resourceId);
+            $table = DiningTable::query()->with('category')->findOrFail($resourceId);
             $category = $table->category;
             $originalAmount = (int) ($category?->standard_price ?? 0);
-            $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => \App\Models\DiningTable::class, 'bookingable_id' => $table->id]), $originalAmount);
+            $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => DiningTable::class, 'bookingable_id' => $table->id]), $originalAmount);
             if ($sectionQuote['discount_amount'] > 0) {
                 $price = $sectionQuote['final_amount'];
                 $discountType = $sectionQuote['discount_type'];
@@ -117,7 +119,7 @@ class BookingService
         $slots = $this->slots->slotsFor($start, $end, $buffer);
 
         try {
-            return DB::transaction(function () use ($user, $resourceType, $resourceId, $start, $end, $data, $price, $originalAmount, $buffer, $slots, $discountType, $discountValue, $discountAmount, $sectionId, $bookableItemId, $planId) {
+            return DB::transaction(function () use ($user, $resourceType, $resourceId, $start, $end, $data, $price, $originalAmount, $slots, $discountType, $discountValue, $discountAmount, $sectionId, $bookableItemId, $planId) {
                 // Layer 1: pessimistic row lock on the parent resource.
                 $this->lockResource($resourceType, $resourceId);
 
@@ -205,7 +207,7 @@ class BookingService
         try {
             app(SectionUsageRecorder::class)->recordBooking($booking);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Section usage recording failed', ['booking_id' => $booking->id, 'error' => $e->getMessage()]);
+            Log::warning('Section usage recording failed', ['booking_id' => $booking->id, 'error' => $e->getMessage()]);
         }
 
         return $booking;
@@ -312,8 +314,8 @@ class BookingService
     {
         match ($resourceType) {
             'hall' => Hall::query()->whereKey($resourceId)->lockForUpdate()->first(),
-            'event' => \App\Models\Event::query()->whereKey($resourceId)->lockForUpdate()->first(),
-            'table' => \App\Models\DiningTable::query()->whereKey($resourceId)->lockForUpdate()->first(),
+            'event' => Event::query()->whereKey($resourceId)->lockForUpdate()->first(),
+            'table' => DiningTable::query()->whereKey($resourceId)->lockForUpdate()->first(),
             default => null,
         };
     }
@@ -322,8 +324,8 @@ class BookingService
     {
         return match ($resourceType) {
             'hall' => Hall::class,
-            'event' => \App\Models\Event::class,
-            'table' => \App\Models\DiningTable::class,
+            'event' => Event::class,
+            'table' => DiningTable::class,
             default => throw ValidationException::withMessages(['resource' => 'Unknown resource type.']),
         };
     }

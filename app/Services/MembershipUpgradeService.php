@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Membership;
 use App\Models\Plan;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Cashier;
@@ -16,14 +17,13 @@ class MembershipUpgradeService
     public function __construct(
         private StripePriceService $prices,
         private MembershipBillingService $billing,
-    ) {
-    }
+    ) {}
 
     /**
      * Plans a member may upgrade to. Upgrades are ordered by annual fee and
      * only plans above the member's current plan are offered.
      */
-    public function upgradePlans(User $user): \Illuminate\Support\Collection
+    public function upgradePlans(User $user): Collection
     {
         $membership = $user->membership()->with('plan')->first();
         $currentFee = (int) ($membership?->plan?->annual_fee ?? 0);

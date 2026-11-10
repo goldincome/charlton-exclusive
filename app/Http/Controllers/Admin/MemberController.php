@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Membership;
 use App\Models\User;
 use App\Services\MembershipService;
 use Illuminate\Contracts\View\View;
@@ -12,9 +11,7 @@ use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
-    public function __construct(private MembershipService $memberships)
-    {
-    }
+    public function __construct(private MembershipService $memberships) {}
 
     public function index(Request $request): View
     {

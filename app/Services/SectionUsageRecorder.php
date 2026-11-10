@@ -16,9 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SectionUsageRecorder
 {
-    public function __construct(private PricingService $pricing)
-    {
-    }
+    public function __construct(private PricingService $pricing) {}
 
     public function resolveForBooking(Booking $booking): array
     {
@@ -26,16 +24,20 @@ class SectionUsageRecorder
         $model = $booking->bookingable;
         if ($type === Hall::class || $model instanceof Hall) {
             $section = Section::query()->where('slug', 'meeting-rooms')->first();
+
             return [$section, $this->bookableFor($section, $model ?: Hall::query()->find($booking->bookingable_id), 'hour')];
         }
         if ($type === Event::class || $model instanceof Event) {
             $section = Section::query()->where('slug', 'events')->first();
+
             return [$section, $this->bookableFor($section, $model ?: Event::query()->find($booking->bookingable_id), 'flat')];
         }
         if ($type === DiningTable::class || $model instanceof DiningTable) {
             $section = Section::query()->where('slug', 'dining')->first();
+
             return [$section, $this->bookableFor($section, $model ?: DiningTable::query()->find($booking->bookingable_id), 'flat')];
         }
+
         return [null, null];
     }
 
@@ -80,6 +82,7 @@ class SectionUsageRecorder
         $result['discount_amount'] = $discount;
         $result['discount_type'] = $discount > 0 ? $type : null;
         $result['discount_value'] = $discount > 0 ? $value : 0;
+
         return $result;
     }
 
@@ -113,10 +116,13 @@ class SectionUsageRecorder
     public function recordFoodOrder(FoodOrder $order, ?array $quote = null): ?SectionUsage
     {
         $section = Section::query()->where('slug', 'dining')->first();
-        if (! $section) return null;
+        if (! $section) {
+            return null;
+        }
         $order->loadMissing('user.membership');
         $original = (int) ($quote['original_amount'] ?? $order->price_locked ?? 0);
         $final = (int) ($quote['final_amount'] ?? $order->price_locked ?? 0);
+
         return SectionUsage::query()->updateOrCreate(
             ['usable_type' => FoodOrder::class, 'usable_id' => $order->id, 'section_id' => $section->id],
             [
@@ -135,11 +141,15 @@ class SectionUsageRecorder
 
     private function bookableFor(?Section $section, ?Model $source, string $pricingUnit): ?BookableItem
     {
-        if (! $section || ! $source) return null;
+        if (! $section || ! $source) {
+            return null;
+        }
         $price = 0;
-        if ($source instanceof Event) $price = (int) $source->price_per_ticket;
+        if ($source instanceof Event) {
+            $price = (int) $source->price_per_ticket;
+        }
         $name = $source->name ?? ($source->number ?? null) ?? (class_basename($source).' #'.$source->getKey());
-        if ($source instanceof \App\Models\DiningTable) {
+        if ($source instanceof DiningTable) {
             $name = 'Table '.($source->number ?? $source->getKey());
         }
 

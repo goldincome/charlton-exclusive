@@ -61,11 +61,8 @@ class PlanController extends Controller
             'description' => ['nullable', 'string'],
             'entrance_fee' => ['required', 'numeric', 'min:0'],
             'annual_fee' => ['required', 'numeric', 'min:0'],
-            'monthly_fee' => ['nullable', 'numeric', 'min:0'],
+            'monthly_fee' => ['required', 'numeric', 'min:0'],
             'price' => ['nullable', 'numeric', 'min:0'],
-            'billing_interval' => ['nullable', Rule::in(['year', 'month'])],
-            'min_sections' => ['required', 'integer', 'min:0'],
-            'nominee_limit' => ['required', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -73,6 +70,7 @@ class PlanController extends Controller
         foreach (['entrance_fee', 'annual_fee', 'monthly_fee', 'price'] as $money) {
             if ($data[$money] === null || $data[$money] === '') {
                 $data[$money] = null;
+
                 continue;
             }
             $data[$money] = (int) round(((float) $data[$money]) * 100);
