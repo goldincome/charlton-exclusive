@@ -16,7 +16,7 @@
                             {{ $member->name }}
                         </a>
                     </h3>
-                    <p style="color: var(--slate-600); font-size: 14px; margin: 0;">{{ $member->email }} · Joined {{ $member->created_at->format('j M Y') }}</p>
+                    <p style="color: var(--slate-600); font-size: 14px; margin: 0;">{{ $member->email }} · Member No: <strong style="color: var(--ink-900);">{{ $member->memberNumber() }}</strong> · Joined {{ $member->created_at->format('j M Y') }}</p>
                 </div>
                 <div>
                     <span class="badge badge-green">Member</span>

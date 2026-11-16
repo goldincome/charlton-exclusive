@@ -75,4 +75,18 @@ class MemberController extends Controller
 
         return back()->with('status', 'Financial status updated.');
     }
+
+    public function updateMemberNumber(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'member_number' => ['required', 'string', 'max:50', 'unique:member_profiles,member_number,'.optional($user->memberProfile)->id],
+        ]);
+
+        $user->memberProfile()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['member_number' => $data['member_number']]
+        );
+
+        return back()->with('status', 'Member number updated successfully.');
+    }
 }

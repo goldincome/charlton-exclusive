@@ -7,6 +7,7 @@ use App\Models\Application;
 use App\Models\Invoice;
 use App\Models\Membership;
 use App\Models\Plan;
+use App\Models\Section;
 use App\Services\InvoicePaymentService;
 use App\Services\InvoiceService;
 use App\Services\MembershipService;
@@ -86,6 +87,7 @@ class ApplicationController extends Controller
             'currentPlan' => $currentPlan,
             'upgradePlans' => $upgradePlans,
             'hasMultiplePlans' => Plan::query()->active()->count() > 1,
+            'sections' => Section::query()->active()->has('plans')->with(['plans' => fn ($q) => $q->where('plans.is_active', true)])->get(),
         ]);
     }
 

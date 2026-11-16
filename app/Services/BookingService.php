@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\DiningTable;
 use App\Models\Event;
 use App\Models\Hall;
+use App\Models\SiteHour;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -285,11 +286,11 @@ class BookingService
         }
 
         foreach ([$start->copy(), $end->copy()->subMinute()] as $moment) {
-            $hours = $hall->openingHoursFor($moment);
+            $hours = SiteHour::openingHoursFor($moment);
 
-            if (! $hours) {
+            if (! $hours || ! $hours->is_open) {
                 throw ValidationException::withMessages([
-                    'start' => "{$hall->name} is closed on this day.",
+                    'start' => 'The club is closed on this day.',
                 ]);
             }
 
@@ -298,7 +299,7 @@ class BookingService
 
             if ($moment->lt($opens) || $moment->gt($closes)) {
                 throw ValidationException::withMessages([
-                    'start' => "Bookings must fit within opening hours ({$hours->opens_at}–{$hours->closes_at}).",
+                    'start' => "Bookings must fit within operating hours ({$hours->opens_at}–{$hours->closes_at}).",
                 ]);
             }
         }

@@ -53,20 +53,16 @@
 
                     @guest
                         <div role="alert" style="border: 1px solid #C9A961; background: rgba(201,169,97,.12); color: var(--champagne-200); padding: 14px 16px; border-radius: 4px; margin-bottom: 20px;">
-                            <p style="margin: 0 0 12px;"><strong>Sign in to continue</strong></p>
-                            <p style="margin: 0 0 14px;">You need an account to request event tickets.</p>
-                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                <a href="{{ route('login') }}" class="btn btn-gold btn-sm">Sign in</a>
-                                <a href="{{ route('register') }}" class="btn btn-line btn-sm">Create account</a>
-                            </div>
+                            <p style="margin: 0 0 6px;"><strong>Add to cart as guest</strong></p>
+                            <p style="margin: 0; font-size: 14px; color: var(--mist-300);">You can add tickets to your cart now. You will be asked to sign in or register when you proceed to checkout.</p>
                         </div>
                     @endguest
 
-                    <form method="POST" action="{{ route('account.book.event.store', $event) }}" style="display: grid; gap: 18px;" @guest disabled @endguest>
+                    <form method="POST" action="{{ route('cart.add.event', $event) }}" style="display: grid; gap: 18px;">
                         @csrf
                         <div>
                             <label class="field-label" for="tickets">Number of tickets</label>
-                            <input class="field-dark" id="tickets" name="tickets" type="number" min="1" max="{{ $event->tickets_per_booking }}" value="{{ old('tickets', 1) }}" required @guest disabled @endguest>
+                            <input class="field-dark" id="tickets" name="tickets" type="number" min="1" max="{{ $event->tickets_per_booking }}" value="{{ old('tickets', 1) }}" required>
                             @error('tickets')<p class="error-text">{{ $message }}</p>@enderror
                         </div>
 
@@ -84,8 +80,8 @@
                             @endauth
                         </div>
 
-                        <button type="submit" class="btn btn-gold" style="width: 100%;" @guest disabled @endguest>Request tickets</button>
-                        <p style="font-size: 13px; color: var(--mist-300); margin-top: -8px;">The club will confirm your place and send payment instructions.</p>
+                        <button type="submit" class="btn btn-gold" style="width: 100%;">Add to cart</button>
+                        <p style="font-size: 13px; color: var(--mist-300); margin-top: -8px;">Add to your cart and check out securely via Stripe.</p>
                     </form>
                 </div>
             </aside>

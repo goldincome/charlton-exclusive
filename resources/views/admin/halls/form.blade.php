@@ -107,7 +107,7 @@
         <p style="font-size: 14px; color: var(--slate-600); margin: 0 0 12px;">Enter standard hourly price in pounds (e.g. 45.00 for £45.00/hr) and member discount settings.</p>
 
         @php
-            $dayTypes = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'BankHoliday'];
+            $dayTypes = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         @endphp
         <div style="display: grid; gap: 12px;">
             @foreach($dayTypes as $dt)
@@ -138,41 +138,6 @@
         </div>
     </div>
 
-    <!-- Operating Hours -->
-    <div class="card-light" style="display: grid; gap: 16px;">
-        <h2 style="font-size: 22px; margin: 0 0 4px;">Operating Hours</h2>
-        <p style="font-size: 14px; color: var(--slate-600); margin: 0 0 12px;">Define opening and closing times for each weekday (0 = Sunday, 1 = Monday, etc.). Leave blank if closed.</p>
-
-        @php
-            $weekdays = [
-                1 => 'Monday',
-                2 => 'Tuesday',
-                3 => 'Wednesday',
-                4 => 'Thursday',
-                5 => 'Friday',
-                6 => 'Saturday',
-                0 => 'Sunday',
-            ];
-        @endphp
-        <div style="display: grid; gap: 12px;">
-            @foreach($weekdays as $wNum => $wName)
-                @php
-                    $hr = $hall->hours?->firstWhere('weekday', $wNum);
-                @endphp
-                <div style="display: grid; grid-template-columns: 140px 1fr 1fr; gap: 12px; align-items: center; background: #fff; padding: 12px; border: 1px solid #E0D5B8; border-radius: 4px;">
-                    <strong>{{ $wName }}</strong>
-                    <div>
-                        <label style="font-size: 12px; display: block; color: var(--slate-600);">Opens At</label>
-                        <input class="field-light" name="hours[{{ $wNum }}][opens_at]" type="time" value="{{ old('hours.'.$wNum.'.opens_at', $hr?->opens_at) }}">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; display: block; color: var(--slate-600);">Closes At</label>
-                        <input class="field-light" name="hours[{{ $wNum }}][closes_at]" type="time" value="{{ old('hours.'.$wNum.'.closes_at', $hr?->closes_at) }}">
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
 
     <!-- Features -->
     <div class="card-light" style="display: grid; gap: 16px;">

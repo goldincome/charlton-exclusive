@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Hall;
 use App\Models\HallFeature;
-use App\Models\HallHour;
 use App\Models\HallImage;
 use App\Models\Redirect;
 use App\Models\RoomRate;
@@ -51,7 +50,7 @@ class HallController extends Controller
     public function edit(Hall $hall): View
     {
         return view('admin.halls.form', [
-            'hall' => $hall->load(['rates', 'features', 'hours', 'images']),
+            'hall' => $hall->load(['rates', 'features', 'images']),
         ]);
     }
 
@@ -112,15 +111,13 @@ class HallController extends Controller
             'ratings.*.standard_price_per_hour' => ['nullable', 'numeric', 'min:0'],
             'ratings.*.member_discount_type' => ['nullable', 'in:percent,fixed,flat'],
             'ratings.*.member_discount_value' => ['nullable', 'integer', 'min:0'],
-            'hours' => ['nullable', 'array'],
             'features' => ['nullable', 'string'],
         ]);
 
         $data['slug'] = ! empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($data['name']);
         $data['active'] = $request->boolean('active');
 
-        // Remove extra non-column fields before updating model
-        unset($data['image'], $data['images'], $data['ratings'], $data['hours'], $data['features']);
+        unset($data['image'], $data['images'], $data['ratings'], $data['features']);
 
         return $data;
     }
@@ -159,19 +156,6 @@ class HallController extends Controller
                     'member_discount_type' => $type,
                     'member_discount_value' => $value,
                 ]
-            );
-        }
-
-        foreach ($request->input('hours', []) as $weekday => $hours) {
-            if (empty($hours['opens_at']) || empty($hours['closes_at'])) {
-                $hall->hours()->where('weekday', $weekday)->delete();
-
-                continue;
-            }
-
-            HallHour::query()->updateOrCreate(
-                ['hall_id' => $hall->id, 'weekday' => (int) $weekday],
-                ['opens_at' => $hours['opens_at'], 'closes_at' => $hours['closes_at']]
             );
         }
 

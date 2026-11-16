@@ -88,4 +88,17 @@
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.addEventListener('click', function() {
+            if (typeof this.showPicker === 'function') {
+                try { this.showPicker(); } catch (e) {}
+            }
+        });
+    }
+});
+</script>
 @endsection

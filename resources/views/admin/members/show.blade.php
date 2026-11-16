@@ -149,6 +149,16 @@
 
     <aside>
         <div class="card-light" style="background: var(--navy-900); color: var(--ivory-100); margin-bottom: 20px;">
+            <h2 style="font-size: 20px; margin: 0 0 14px;">Member Number</h2>
+            <form method="POST" action="{{ route('admin.members.member-number', $user) }}" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(201,169,97,.25);">
+                @csrf
+                <label class="field-label" for="member_number" style="color: var(--ivory-100);">Member No.</label>
+                <div style="display: flex; gap: 8px;">
+                    <input class="field-dark" id="member_number" name="member_number" value="{{ old('member_number', $user->memberNumber()) }}" required style="color-scheme: dark;">
+                    <button type="submit" class="btn btn-gold btn-sm">Save</button>
+                </div>
+            </form>
+
             <h2 style="font-size: 20px; margin: 0 0 14px;">Admin actions</h2>
 
             @if (! $membership)

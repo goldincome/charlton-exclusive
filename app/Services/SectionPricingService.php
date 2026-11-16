@@ -15,12 +15,29 @@ class SectionPricingService
      *
      * @return array{allowed:bool, reason:?string, plan_id:?int, original_amount:int, discount_amount:int, final_amount:int, discount_type:?string, discount_value:int}
      */
-    public function quote(User $user, Section $section, int $baseAmountPence): array
+    public function quote(?User $user, Section $section, int $baseAmountPence): array
     {
         $baseAmountPence = max(0, $baseAmountPence);
 
         if (! $section->active) {
             return $this->denied('This section is currently paused.', $baseAmountPence);
+        }
+
+        if (! $user) {
+            if ($section->isOpenToPublic()) {
+                return [
+                    'allowed' => true,
+                    'reason' => null,
+                    'plan_id' => null,
+                    'original_amount' => $baseAmountPence,
+                    'discount_amount' => 0,
+                    'final_amount' => $baseAmountPence,
+                    'discount_type' => null,
+                    'discount_value' => 0,
+                ];
+            }
+
+            return $this->denied('Please sign in or register to access this section.', $baseAmountPence);
         }
 
         if ($section->isOpenToPublic() && ! $user->hasMemberAccess()) {

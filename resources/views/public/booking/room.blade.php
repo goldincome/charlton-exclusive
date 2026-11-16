@@ -61,16 +61,12 @@
 
                     @guest
                         <div role="alert" style="border: 1px solid #C9A961; background: rgba(201,169,97,.12); color: var(--champagne-200); padding: 14px 16px; border-radius: 4px; margin-bottom: 20px;">
-                            <p style="margin: 0 0 12px;"><strong>Sign in to submit</strong></p>
-                            <p style="margin: 0 0 14px;">You can select your dates and times below, but you will be asked to sign in before submitting your request.</p>
-                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                                <a href="{{ route('login') }}" class="btn btn-gold btn-sm">Sign in</a>
-                                <a href="{{ route('register') }}" class="btn btn-line btn-sm">Create account</a>
-                            </div>
+                            <p style="margin: 0 0 6px;"><strong>Add to cart as guest</strong></p>
+                            <p style="margin: 0; font-size: 14px; color: var(--mist-300);">You can add this room to your cart now. You will be asked to sign in or register when you proceed to checkout.</p>
                         </div>
                     @endguest
 
-                    <form method="POST" action="{{ route('account.book.room.store', $hall) }}" style="display: grid; gap: 18px;">
+                    <form method="POST" action="{{ route('cart.add.room', $hall) }}" style="display: grid; gap: 18px;">
                         @csrf
                         <input type="hidden" id="start_time" name="start_time" value="{{ old('start_time') }}">
                         <input type="hidden" id="end_time" name="end_time" value="{{ old('end_time') }}">
@@ -112,7 +108,7 @@
                         </label>
                         @error('rules_ack')<p class="error-text">{{ $message }}</p>@enderror
 
-                        <button type="submit" class="btn btn-gold" style="width: 100%;">Send booking request</button>
+                        <button type="submit" class="btn btn-gold" style="width: 100%;">Add to cart</button>
                     </form>
                 </div>
             </aside>
@@ -132,6 +128,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (datePicker) {
         const today = new Date().toISOString().split('T')[0];
         datePicker.setAttribute('min', today);
+
+        datePicker.addEventListener('click', function() {
+            if (typeof this.showPicker === 'function') {
+                try {
+                    this.showPicker();
+                } catch (e) {}
+            }
+        });
 
         datePicker.addEventListener('change', function() {
             const selectedDate = this.value;

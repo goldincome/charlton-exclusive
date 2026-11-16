@@ -90,13 +90,19 @@
                         </div>
                     @endif
 
-                    @if ($hall->hours->isNotEmpty())
+                    @php $siteHours = \App\Models\SiteHour::query()->orderBy('weekday')->get(); @endphp
+                    @if ($siteHours->isNotEmpty())
                         <div>
-                            <h3 style="font-size: 20px; margin-bottom: 10px; color: var(--champagne-200);">Opening Hours</h3>
+                            <h3 style="font-size: 20px; margin-bottom: 10px; color: var(--champagne-200);">Operating Hours</h3>
                             <ul style="margin: 0; padding-left: 18px; color: var(--mist-300); font-size: 15px; display: grid; gap: 4px;">
-                                @foreach ($hall->hours->sortBy('weekday') as $hour)
+                                @foreach ($siteHours as $hour)
                                     <li>{{ ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][$hour->weekday] }}:
-                                        {{ \Illuminate\Support\Carbon::parse($hour->opens_at)->format('H:i') }}–{{ \Illuminate\Support\Carbon::parse($hour->closes_at)->format('H:i') }}</li>
+                                        @if($hour->is_open)
+                                            {{ \Illuminate\Support\Carbon::parse($hour->opens_at)->format('H:i') }}–{{ \Illuminate\Support\Carbon::parse($hour->closes_at)->format('H:i') }}
+                                        @else
+                                            Closed
+                                        @endif
+                                    </li>
                                 @endforeach
                             </ul>
                         </div>
@@ -138,9 +144,9 @@
 
                     <!-- Booking Form -->
                     <div style="display: grid; gap: 18px; border-top: 1px solid rgba(201,169,97,0.2); padding-top: 24px;">
-                        <h2 style="font-size: 22px; margin: 0; color: var(--champagne-200);">Request a booking for {{ $hall->name }}</h2>
+                        <h2 style="font-size: 22px; margin: 0; color: var(--champagne-200);">Book {{ $hall->name }}</h2>
                         <p style="font-size: 14px; color: var(--mist-300); margin: 0;">
-                            Select date, time slots & guests. Approved requests receive a 72-hour payment window.
+                            Select date, time slots & guests to add to your cart and check out securely via Stripe.
                         </p>
 
                         @if ($errors->any())
@@ -151,8 +157,8 @@
 
                         @guest
                             <div role="alert" style="border: 1px solid #C9A961; background: rgba(201,169,97,.12); color: var(--champagne-200); padding: 12px 14px; border-radius: 4px; font-size: 13px;">
-                                <p style="margin: 0 0 6px;"><strong>Sign in required to submit</strong></p>
-                                <p style="margin: 0 0 10px;">Select your times below, then sign in to send your request.</p>
+                                <p style="margin: 0 0 6px;"><strong>Sign in required to book</strong></p>
+                                <p style="margin: 0 0 10px;">Select your times below, then sign in to add to cart.</p>
                                 <div style="display: flex; gap: 8px;">
                                     <a href="{{ route('login') }}" class="btn btn-gold btn-sm">Sign in</a>
                                     <a href="{{ route('register') }}" class="btn btn-line btn-sm">Register</a>
@@ -160,7 +166,7 @@
                             </div>
                         @endguest
 
-                        <form method="POST" action="{{ route('account.book.room.store', $hall) }}" style="display: grid; gap: 16px;">
+                        <form method="POST" action="{{ route('account.cart.add.room', $hall) }}" style="display: grid; gap: 16px;">
                             @csrf
                             <input type="hidden" id="start_time" name="start_time" value="{{ old('start_time') }}">
                             <input type="hidden" id="end_time" name="end_time" value="{{ old('end_time') }}">
@@ -202,7 +208,7 @@
                             </label>
                             @error('rules_ack')<p class="error-text">{{ $message }}</p>@enderror
 
-                            <button type="submit" class="btn btn-gold" style="width: 100%; padding-block: 14px; font-weight: 600; letter-spacing: 0.05em;">Send booking request</button>
+                            <button type="submit" class="btn btn-gold" style="width: 100%; padding-block: 14px; font-weight: 600; letter-spacing: 0.05em;">Add to Cart</button>
                         </form>
                     </div>
                 </div>

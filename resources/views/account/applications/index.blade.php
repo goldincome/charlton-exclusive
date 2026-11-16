@@ -35,6 +35,16 @@
 
         return $type === 'fixed' ? '£'.number_format($value / 100, 2).' off' : $value.'% off';
     };
+    $sectionCta = function ($section) {
+        return match ($section->slug) {
+            'events' => ['text' => 'Host your events in a serene environment, click here to book event', 'url' => route('events.index')],
+            'meeting-rooms' => ['text' => 'Book our well-equipped meeting rooms for your conferences and gatherings, click here to book', 'url' => route('rooms.index')],
+            'dining' => ['text' => 'Enjoy fine dining in our restaurant and lounge, click here to view dining', 'url' => route('dining')],
+            'library' => ['text' => 'Relax and study in our quiet library and reading room', 'url' => route('membership.section', $section->slug)],
+            'reciprocal' => ['text' => 'Explore our partner clubs across the reciprocal network', 'url' => route('membership.section', $section->slug)],
+            default => ['text' => $section->description, 'url' => route('membership.section', $section->slug)],
+        };
+    };
     $samePlanSwitch = $membership?->isMonthly()
         ? $upgradePlans->firstWhere('id', $membership->plan_id)
         : null;
@@ -159,28 +169,35 @@
         @endif
 
         @php
-            $includedSections = $currentPlan->sections->filter(fn ($section) => ($section->pivot->is_active ?? true));
+            $includedSections = $currentPlan?->sections?->filter(fn ($section) => $section->active && ($section->pivot->is_active ?? true)) ?? collect();
         @endphp
         @if ($includedSections->isNotEmpty())
             <div class="card-light">
                 <h3 style="font-size: 20px; margin: 0 0 6px;">Sections in your plan</h3>
                 <p style="color: var(--slate-600); font-size: 14px; margin: 0 0 16px;">
                     @if ($membership?->isMonthly())
-                        You have access to these sections. Discounts apply once you switch to yearly billing.
+                        Your subscription type (Monthly billing) does not offer section discounts. <a href="{{ route('account.membership.upgrade', ['plan' => $samePlanSwitch?->id ?? $currentPlan->id]) }}" class="link-claret" style="font-weight: 600;">Upgrade to a yearly plan</a> so you can get section discounts up to 25% off.
                     @else
-                        These sections are included automatically. Member discounts are applied each time you use them.
+                        You are getting this discount because you are a Yearly paying member of <strong>{{ $currentPlan->name }}</strong>.
                     @endif
                 </p>
                 <div style="display: grid; gap: 10px;">
                     @foreach ($includedSections as $section)
+                        @php $cta = $sectionCta($section); @endphp
                         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 12px 14px; border: 1px solid #E0D5B8; border-radius: 4px; background: #faf8f3;">
                             <div>
-                                <strong>{{ $section->name }}</strong>
+                                <strong><a href="{{ $cta['url'] }}" class="link-claret" style="text-decoration: none;">{{ $section->name }} →</a></strong>
                                 <p style="font-size: 13px; color: var(--slate-600); margin: 4px 0 0;">
-                                    {{ $section->access_type === 'open' ? 'Open to members and non-members' : 'Members only' }}
+                                    <a href="{{ $cta['url'] }}" style="color: inherit; text-decoration: none;">{{ $cta['text'] }}</a>
                                 </p>
                             </div>
-                            <span class="badge badge-gold">{{ $membership?->isMonthly() ? 'Standard rate' : $discountLabel($section) }}</span>
+                            @php
+                                $dLabel = $discountLabel($section);
+                                $badgeText = $membership?->isMonthly()
+                                    ? ($dLabel === 'Included' ? 'Upgrade to get discounts' : 'Upgrade to get '.$dLabel)
+                                    : $dLabel;
+                            @endphp
+                            <span class="badge badge-gold">{{ $badgeText }}</span>
                         </div>
                     @endforeach
                 </div>
@@ -260,9 +277,31 @@
     <div class="card-light">
         <h2 style="font-size: 22px; margin: 0 0 10px;">You are not a member yet</h2>
         <p style="color: var(--slate-600); margin: 0 0 16px;">
-            You can still book rooms and services as a guest at standard rates. Apply for membership to unlock members-only access and yearly discounts.
+            You can still book rooms and services as a guest at standard rates. <strong>Subscribe to a yearly membership plan</strong> and unlock exclusive member discounts across all club sections:
         </p>
-        <a href="{{ route('account.applications.start') }}" class="btn btn-navy">Start an application</a>
+        @if (isset($sections) && $sections->isNotEmpty())
+            <div style="display: grid; gap: 10px; margin-bottom: 20px;">
+                @foreach ($sections as $section)
+                    @php
+                        $samplePivot = $section->plans->first()?->pivot;
+                        $sampleType = $samplePivot->type ?? 'percent';
+                        $sampleVal = (int) ($samplePivot->value ?? 15);
+                        $sampleDiscount = $sampleVal > 0 ? ($sampleType === 'fixed' ? '£'.number_format($sampleVal / 100, 2).' off' : $sampleVal.'% off') : 'Member access';
+                        $cta = $sectionCta($section);
+                    @endphp
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 12px 14px; border: 1px solid #E0D5B8; border-radius: 4px; background: #faf8f3;">
+                        <div>
+                            <strong><a href="{{ $cta['url'] }}" class="link-claret" style="text-decoration: none;">{{ $section->name }} →</a></strong>
+                            <p style="font-size: 13px; color: var(--slate-600); margin: 4px 0 0;">
+                                <a href="{{ $cta['url'] }}" style="color: inherit; text-decoration: none;">{{ $cta['text'] }}</a>
+                            </p>
+                        </div>
+                        <span class="badge badge-gold">Subscribe to get {{ $sampleDiscount }}</span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+        <a href="{{ route('account.applications.start') }}" class="btn btn-navy">Subscribe to a plan</a>
     </div>
 @endif
 @endsection

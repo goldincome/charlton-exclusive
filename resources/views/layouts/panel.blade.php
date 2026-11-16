@@ -62,6 +62,8 @@
                 <div style="border-top: 1px solid rgba(201,169,97,.15); margin: 16px 24px;"></div>
                 <a href="{{ route('admin.content.journal') }}" class="panel-nav-link {{ request()->routeIs('admin.content.*') ? 'active' : '' }}">Content</a>
                 <a href="{{ route('admin.settings.index') }}" class="panel-nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">Settings</a>
+                <a href="{{ route('admin.operating-hours.index') }}" class="panel-nav-link {{ request()->routeIs('admin.operating-hours.*') ? 'active' : '' }}">Operating hours</a>
+                <a href="{{ route('admin.off-dates.index') }}" class="panel-nav-link {{ request()->routeIs('admin.off-dates.*') ? 'active' : '' }}">Off-dates</a>
                 <a href="{{ route('admin.audit.index') }}" class="panel-nav-link {{ request()->routeIs('admin.audit.*') ? 'active' : '' }}">Audit log</a>
                 <a href="{{ route('admin.reports.index') }}" class="panel-nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">Reports</a>
                 <div style="border-top: 1px solid rgba(201,169,97,.15); margin: 16px 24px;"></div>
@@ -71,7 +73,7 @@
         </nav>
 
         <div style="margin-top: auto; padding: 24px; border-top: 1px solid rgba(201,169,97,.15);">
-            <p style="font-size: 13px; color: var(--mist-300); margin: 0 0 8px;">{{ auth()->user()->name }}</p>
+            <p style="font-size: 13px; color: var(--mist-300); margin: 0 0 8px;">{{ auth()->user()?->name ?? 'Guest' }}</p>
             <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
                 @csrf
                 <button type="submit" style="background: none; border: none; color: var(--gold-500); font-size: 14px; cursor: pointer; padding: 0;">Sign out</button>

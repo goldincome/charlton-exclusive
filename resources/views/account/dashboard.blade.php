@@ -8,7 +8,7 @@
 
 @if ($user->membership)
     <div class="card-light" style="margin-bottom: 32px; background: var(--navy-900); color: var(--ivory-100);">
-        <p class="eyebrow" style="font-size: 12px; color: var(--gold-500);">Membership</p>
+        <p class="eyebrow" style="font-size: 12px; color: var(--gold-500);">Membership · Member No: <strong>{{ $user->memberNumber() }}</strong></p>
         <h2 style="font-size: 24px; margin: 8px 0 4px;">{{ $user->membership->plan?->name ?? 'Membership' }}</h2>
         <p style="color: var(--mist-300);">
             {{ $user->membership->isMonthly() ? 'Monthly' : 'Yearly' }} billing

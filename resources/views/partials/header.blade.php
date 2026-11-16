@@ -9,6 +9,9 @@
         ['label' => 'Contact', 'route' => 'contact'],
     ];
     $current = request()->route()?->getName();
+    $cartCount = auth()->check()
+        ? \App\Models\CartItem::query()->where('user_id', auth()->id())->sum('quantity')
+        : collect(session('cart_items', []))->sum('quantity');
 @endphp
 
 <header style="background: var(--navy-900); border-bottom: 1px solid rgba(201,169,97,.3); position: sticky; top: 0; z-index: 50;">
@@ -30,6 +33,13 @@
         </nav>
 
         <div style="display: flex; align-items: center; gap: 16px;">
+            <a href="{{ route('cart.index') }}" style="position: relative; display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--champagne-200); text-decoration: none;">
+                <span>🛒 Cart</span>
+                @if ($cartCount > 0)
+                    <span style="background: var(--gold-500); color: var(--navy-900); font-size: 11px; font-weight: 700; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;">{{ $cartCount }}</span>
+                @endif
+            </a>
+
             @auth
                 <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('account.dashboard') }}" style="font-size: 15px; color: var(--champagne-200);">My account</a>
             @else
@@ -49,6 +59,7 @@
             @foreach ($nav as $item)
                 <a href="{{ route($item['route']) }}" style="padding: 12px 0; font-size: 17px;">{{ $item['label'] }}</a>
             @endforeach
+            <a href="{{ route('cart.index') }}" style="padding: 12px 0; font-size: 17px; color: var(--champagne-200);">Cart ({{ $cartCount }})</a>
             @guest
                 <a href="{{ route('login') }}" style="padding: 12px 0; font-size: 17px; color: var(--champagne-200);">Member login</a>
             @endguest

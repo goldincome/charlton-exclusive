@@ -22,6 +22,9 @@
             The applicant is emailed a payment link and activates their membership by subscribing monthly or yearly.
         </p>
     </div>
+    <div>
+        <a href="{{ route('admin.applications.create') }}" class="btn btn-gold">+ Register Walk-in Application</a>
+    </div>
 </header>
 
 <form method="GET" action="{{ route('admin.applications.index') }}" style="margin-bottom: 20px; display:flex; gap:12px; flex-wrap:wrap; align-items:end;">

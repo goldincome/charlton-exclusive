@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\DiningTable;
 use App\Models\Event;
 use App\Models\Hall;
+use App\Models\SiteHour;
 use App\Services\BookingService;
 use App\Services\PricingService;
 use App\Services\SlotManager;
@@ -42,17 +43,16 @@ class BookingController extends Controller
     public function getTimeSlots(Request $request, SlotManager $slotManager)
     {
         $hallId = $request->input('hall_id');
-        $hall = Hall::query()->with('hours')->findOrFail($hallId);
+        $hall = Hall::query()->findOrFail($hallId);
         $date = Carbon::parse($request->input('booking_date'));
-        $dayOfWeek = $date->dayOfWeek;
 
-        $hallHour = $hall->hours->firstWhere('weekday', $dayOfWeek);
-        if (! $hallHour || ! $hallHour->is_open) {
+        $siteHour = SiteHour::openingHoursFor($date);
+        if (! $siteHour || ! $siteHour->is_open) {
             return response()->json(['slots' => []]);
         }
 
-        $openTime = Carbon::parse($date->toDateString().' '.$hallHour->opens_at);
-        $closeTime = Carbon::parse($date->toDateString().' '.$hallHour->closes_at);
+        $openTime = Carbon::parse($date->toDateString().' '.$siteHour->opens_at);
+        $closeTime = Carbon::parse($date->toDateString().' '.$siteHour->closes_at);
 
         $slots = [];
         $cursor = $openTime->copy();
@@ -85,7 +85,7 @@ class BookingController extends Controller
             'notes' => $request->string('notes')->toString() ?: null,
         ]);
 
-        return redirect()->route('bookings.show', $booking)
+        return redirect()->route('account.bookings.show', $booking)
             ->with('status', 'Your request has been sent to the club. We will confirm within 72 hours.');
     }
 
@@ -106,7 +106,7 @@ class BookingController extends Controller
             'guests' => $data['tickets'],
         ]);
 
-        return redirect()->route('bookings.show', $booking)->with('status', 'Your place request has been received.');
+        return redirect()->route('account.bookings.show', $booking)->with('status', 'Your place request has been received.');
     }
 
     public function createTable(DiningTable $table): View
@@ -130,7 +130,7 @@ class BookingController extends Controller
             'guests' => $data['guests'],
         ]);
 
-        return redirect()->route('bookings.show', $booking)->with('status', 'Your table request has been received.');
+        return redirect()->route('account.bookings.show', $booking)->with('status', 'Your table request has been received.');
     }
 
     public function show(Booking $booking): View

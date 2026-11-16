@@ -6,6 +6,7 @@ use App\Http\Controllers\Account\DashboardController;
 use App\Http\Controllers\Account\InvoiceController;
 use App\Http\Controllers\Account\MembershipUpgradeController;
 use App\Http\Controllers\Admin\ApplicationController as AdminApplicationController;
+use App\Http\Controllers\Admin\BankHolidayController;
 use App\Http\Controllers\Admin\BookableItemController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\ContentController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SiteHourController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FoodOrderController;
 use App\Http\Controllers\Public\ContactController;
@@ -91,6 +93,16 @@ Route::get('/book/event/{event}', [BookingController::class, 'createEvent'])->na
 Route::get('/book/table/{table}', [BookingController::class, 'createTable'])->name('book.table');
 Route::get('/schedule/slots', [BookingController::class, 'getTimeSlots'])->name('time.slots');
 
+// Public Cart & Checkout
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::get('/services', [CartController::class, 'services'])->name('services.index');
+Route::post('/cart/add/{item}', [CartController::class, 'add'])->name('cart.add');
+Route::post('/cart/add/room/{hall}', [CartController::class, 'addHall'])->name('cart.add.room');
+Route::post('/cart/add/event/{event}', [CartController::class, 'addEvent'])->name('cart.add.event');
+Route::post('/cart/remove/{item}', [CartController::class, 'remove'])->name('cart.remove');
+Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+Route::get('/cart/success', [CartController::class, 'success'])->name('cart.success');
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated account area
@@ -116,6 +128,8 @@ Route::middleware(['auth', 'verified', 'noindex'])->prefix('account')->name('acc
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::get('/services', [CartController::class, 'services'])->name('services.index');
     Route::post('/cart/add/{item}', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/add/room/{hall}', [CartController::class, 'addHall'])->name('cart.add.room');
+    Route::post('/cart/add/event/{event}', [CartController::class, 'addEvent'])->name('cart.add.event');
     Route::post('/cart/remove/{item}', [CartController::class, 'remove'])->name('cart.remove');
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
     Route::get('/cart/success', [CartController::class, 'success'])->name('cart.success');
@@ -187,6 +201,9 @@ Route::middleware(['auth', 'verified', 'noindex', 'role:admin'])->prefix('admin'
     Route::resource('events', AdminEventController::class);
     Route::post('/events/{event}/cancel', [AdminEventController::class, 'cancel'])->name('events.cancel');
 
+    Route::get('/applications/users-search', [AdminApplicationController::class, 'searchUsers'])->name('applications.users-search');
+    Route::get('/applications/create', [AdminApplicationController::class, 'create'])->name('applications.create');
+    Route::post('/applications', [AdminApplicationController::class, 'store'])->name('applications.store');
     Route::get('/applications', [AdminApplicationController::class, 'index'])->name('applications.index');
     Route::get('/applications/{application}', [AdminApplicationController::class, 'show'])->name('applications.show');
     Route::get('/applications/{application}/documents/{type}', [AdminApplicationController::class, 'downloadDocument'])->name('applications.documents');
@@ -202,6 +219,7 @@ Route::middleware(['auth', 'verified', 'noindex', 'role:admin'])->prefix('admin'
     Route::post('/members/{user}/suspend', [MemberController::class, 'suspend'])->name('members.suspend');
     Route::post('/members/{user}/reinstate', [MemberController::class, 'reinstate'])->name('members.reinstate');
     Route::post('/members/{user}/financial', [MemberController::class, 'toggleFinancial'])->name('members.financial');
+    Route::post('/members/{user}/member-number', [MemberController::class, 'updateMemberNumber'])->name('members.member-number');
 
     Route::get('/menu', [MenuController::class, 'index'])->name('menu.index');
     Route::post('/menu/categories', [MenuController::class, 'storeCategory'])->name('menu.categories.store');
@@ -239,6 +257,11 @@ Route::middleware(['auth', 'verified', 'noindex', 'role:admin'])->prefix('admin'
     Route::post('/settings/vat', [SettingsController::class, 'updateVat'])->name('settings.vat');
     Route::post('/settings/bank-holidays', [SettingsController::class, 'storeBankHoliday'])->name('settings.bank-holidays');
     Route::post('/settings/sections', [SettingsController::class, 'storeSection'])->name('settings.sections');
+    Route::get('/operating-hours', [SiteHourController::class, 'index'])->name('operating-hours.index');
+    Route::put('/operating-hours', [SiteHourController::class, 'update'])->name('operating-hours.update');
+    Route::get('/off-dates', [BankHolidayController::class, 'index'])->name('off-dates.index');
+    Route::post('/off-dates', [BankHolidayController::class, 'store'])->name('off-dates.store');
+    Route::delete('/off-dates/{bankHoliday}', [BankHolidayController::class, 'destroy'])->name('off-dates.destroy');
     Route::get('/audit', [SettingsController::class, 'auditLogs'])->name('audit.index');
     Route::get('/outbox', [SettingsController::class, 'outbox'])->name('outbox.index');
     Route::get('/contact-messages', [SettingsController::class, 'contactMessages'])->name('contact.index');

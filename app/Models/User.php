@@ -78,6 +78,26 @@ class User extends Authenticatable
         return $this->hasRole('member');
     }
 
+    public function memberNumber(): string
+    {
+        $profile = $this->memberProfile;
+        if ($profile && $profile->member_number) {
+            return $profile->member_number;
+        }
+
+        $number = 'CEC-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+
+        $this->memberProfile()->updateOrCreate(
+            ['user_id' => $this->id],
+            [
+                'member_number' => $number,
+                'joined_at' => $this->memberProfile?->joined_at ?? $this->created_at->toDateString(),
+            ]
+        );
+
+        return $number;
+    }
+
     public function isAdmin(): bool
     {
         return $this->hasRole('admin');
