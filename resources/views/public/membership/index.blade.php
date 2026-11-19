@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('content')
-<section style="position: relative; overflow: hidden; padding-block: clamp(56px, 7vw, 104px);">
+<section style="position: relative; overflow: hidden; padding-block: clamp(24px, 4vw, 48px);">
     <svg aria-hidden="true" viewBox="0 0 1440 600" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: .14;" fill="none" stroke="#C9A961" stroke-width="1.2">
         <path d="M-20 360 C 240 290, 460 460, 720 380 S 1180 280, 1460 380"></path>
         <path d="M-20 410 C 240 340, 460 510, 720 430 S 1180 330, 1460 430"></path>

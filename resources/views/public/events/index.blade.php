@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('content')
-<section style="padding-block: clamp(56px, 7vw, 96px);">
+<section style="padding-block: clamp(24px, 4vw, 48px);">
     <div class="container-x">
         <p class="eyebrow" style="color: var(--gold-500);">What’s on</p>
         <h1 style="font-size: clamp(38px, 5vw, 60px); margin: 18px 0 22px;">The club <em style="color: var(--champagne-200);">diary</em></h1>

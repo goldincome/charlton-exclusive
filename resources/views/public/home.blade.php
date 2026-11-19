@@ -31,7 +31,7 @@
 @section('content')
 
 {{-- 1. Hero --}}
-<section style="position: relative; overflow: hidden; padding: clamp(64px, 9vw, 120px) 0;">
+<section style="position: relative; overflow: hidden; padding: clamp(24px, 3.5vw, 48px) 0;">
     <svg aria-hidden="true" viewBox="0 0 1440 700" preserveAspectRatio="none"
          style="position: absolute; inset: 0; width: 100%; height: 100%; opacity: .16;" fill="none" stroke="#C9A961" stroke-width="1.2">
         <path d="M-20 420 C 240 340, 420 520, 700 440 S 1180 330, 1460 430"></path>
@@ -267,8 +267,12 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px;">
             @forelse ($events as $event)
                 <article class="card-dark" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-                    <div class="placeholder" style="height: 200px; border: 0; border-bottom: 1px solid rgba(201,169,97,.3); background: var(--navy-900);">
-                        [Event image]
+                    <div style="height: 200px; border: 0; border-bottom: 1px solid rgba(201,169,97,.3); background: var(--navy-900); overflow: hidden;">
+                        @if ($event->og_image)
+                            <img src="{{ route('media.public', $event->og_image) }}" alt="{{ $event->name }}" width="400" height="200" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                        @else
+                            <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--mist-300);">[Event image]</div>
+                        @endif
                     </div>
                     <div style="padding: 28px; display: flex; flex-direction: column; flex: 1;">
                         <p class="eyebrow" style="font-size: 12px; color: var(--gold-500);">

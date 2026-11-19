@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('content')
-<section style="padding-block: clamp(56px, 7vw, 96px);">
+<section style="padding-block: clamp(24px, 4vw, 48px);">
     <div class="container-x" style="display: flex; flex-wrap: wrap; gap: 48px; align-items: center;">
         <div style="flex: 1 1 480px;">
             <p class="eyebrow" style="color: var(--gold-500);">Meeting rooms</p>

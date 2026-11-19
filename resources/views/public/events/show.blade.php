@@ -35,7 +35,7 @@
 @endphp
 
 @section('content')
-<section style="padding-block: clamp(40px, 5vw, 72px);">
+<section style="padding-block: clamp(24px, 4vw, 48px);">
     <div class="container-x">
         <nav aria-label="Breadcrumb" style="font-size: 14px; color: var(--mist-300); margin-bottom: 20px;">
             <a href="{{ route('home') }}">Home</a> <span aria-hidden="true">/</span>
