@@ -278,7 +278,7 @@
                         <p style="margin-bottom: 16px; color: var(--mist-300);">
                             £{{ number_format($event->price_per_ticket / 100, 2) }} · Members £{{ number_format(($pricing->applyDiscount((int) $event->price_per_ticket, (string) $event->member_discount_type, (int) $event->member_discount_value)) / 100, 2) }}
                         </p>
-                        <a href="{{ route('book.event', $event) }}" class="link-gold" style="margin-top: auto;">Request a place</a>
+                        <a href="{{ route('events.show', $event->slug) }}" class="link-gold" style="margin-top: auto;">Request a place</a>
                     </div>
                 </article>
             @empty

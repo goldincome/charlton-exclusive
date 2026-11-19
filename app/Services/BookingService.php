@@ -76,16 +76,20 @@ class BookingService
             $planId = $sectionQuote['plan_id'] ?: $planId;
         } elseif ($resourceType === 'event') {
             $event = Event::query()->findOrFail($resourceId);
+            if ($event->members_only && ! $user->hasMemberAccess()) {
+                throw ValidationException::withMessages(['event' => 'This event is exclusive to members.']);
+            }
             $tickets = max(1, (int) ($data['guests'] ?? 1));
             $originalAmount = (int) $event->price_per_ticket * $tickets;
             $sectionQuote = $usageRecorder->quoteForBooking($user, new Booking(['bookingable_type' => Event::class, 'bookingable_id' => $event->id]), $originalAmount);
-            $price = $sectionQuote['discount_amount'] > 0 ? $sectionQuote['final_amount'] : $this->pricing->eventTicketPrice($event, $user->canGetMemberRates(), $tickets);
+            $isMember = $user->hasMemberAccess();
+            $price = $sectionQuote['discount_amount'] > 0 ? $sectionQuote['final_amount'] : $this->pricing->eventTicketPrice($event, $isMember, $tickets);
             if ($sectionQuote['discount_amount'] > 0) {
                 $discountType = $sectionQuote['discount_type'];
                 $discountValue = $sectionQuote['discount_value'];
                 $discountAmount = $sectionQuote['discount_amount'];
             } else {
-                $eventQuote = $this->pricing->eventQuote($event, $user->canGetMemberRates(), $tickets);
+                $eventQuote = $this->pricing->eventQuote($event, $isMember, $tickets);
                 $discountType = $eventQuote['discount_type'];
                 $discountValue = $eventQuote['discount_value'];
                 $discountAmount = $eventQuote['discount_amount'];

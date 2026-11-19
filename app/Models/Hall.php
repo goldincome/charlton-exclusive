@@ -9,6 +9,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Hall extends Model
 {
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where($field ?? 'slug', $value)
+            ->orWhere('id', $value)
+            ->firstOrFail();
+    }
+
     protected $fillable = [
         'name', 'slug', 'description', 'capacity', 'capacity_seated', 'area', 'amenities',
         'buffer_minutes', 'min_hours', 'active', 'seo_title', 'seo_description', 'og_image', 'meta_alt',

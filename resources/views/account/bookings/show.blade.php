@@ -20,13 +20,46 @@
                     <dt style="color: var(--slate-600);">End</dt>
                     <dd style="margin: 0; font-weight: 600;">{{ $booking->end_time->format('D j M Y, H:i') }}</dd>
                 </div>
+                @if ($booking->bookingable_type === \App\Models\Hall::class)
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
+                        <dt style="color: var(--slate-600);">Selected Times</dt>
+                        <dd style="margin: 0; text-align: right; font-weight: 600;">
+                            @php
+                                $cursor = $booking->start_time->copy();
+                                $end = $booking->end_time->copy();
+                                $slotRanges = [];
+                                while ($cursor->lt($end)) {
+                                    $slotEnd = $cursor->copy()->addHour();
+                                    if ($slotEnd->gt($end)) {
+                                        $slotEnd = $end->copy();
+                                    }
+                                    $slotRanges[] = $cursor->format('g:i A').' - '.$slotEnd->format('g:i A');
+                                    $cursor->addHour();
+                                }
+                            @endphp
+                            {{ implode(', ', $slotRanges) }}
+                        </dd>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
+                        <dt style="color: var(--slate-600);">Duration</dt>
+                        <dd style="margin: 0; font-weight: 600;">
+                            @php
+                                $durationMinutes = $booking->start_time->diffInMinutes($booking->end_time);
+                                $hours = floor($durationMinutes / 60);
+                                $mins = $durationMinutes % 60;
+                            @endphp
+                            {{ $hours > 0 ? $hours . ' ' . Str::plural('hour', $hours) : '' }}
+                            {{ $mins > 0 ? $mins . ' mins' : '' }}
+                        </dd>
+                    </div>
+                @endif
                 <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
                     <dt style="color: var(--slate-600);">Guests</dt>
                     <dd style="margin: 0;">{{ $booking->guests }}</dd>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <dt style="color: var(--slate-600);">Status</dt>
-                    <dd style="margin: 0;"><span class="badge badge-{{ $booking->status === 'confirmed' ? 'green' : 'gold' }}">{{ ucfirst($booking->status) }}</span></dd>
+                    <dd style="margin: 0;"><span class="badge badge-{{ in_array($booking->status, ['confirmed', 'approved', 'completed', 'checked_in']) ? 'green' : 'gold' }}">{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</span></dd>
                 </div>
             </dl>
 

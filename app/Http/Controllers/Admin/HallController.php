@@ -8,7 +8,6 @@ use App\Models\HallFeature;
 use App\Models\HallImage;
 use App\Models\Redirect;
 use App\Models\RoomRate;
-use App\Services\PricingService;
 use App\Services\StorageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -109,8 +108,6 @@ class HallController extends Controller
             'images.*' => ['image', 'max:10240'],
             'ratings' => ['nullable', 'array'],
             'ratings.*.standard_price_per_hour' => ['nullable', 'numeric', 'min:0'],
-            'ratings.*.member_discount_type' => ['nullable', 'in:percent,fixed,flat'],
-            'ratings.*.member_discount_value' => ['nullable', 'integer', 'min:0'],
             'features' => ['nullable', 'string'],
         ]);
 
@@ -143,18 +140,10 @@ class HallController extends Controller
                 continue;
             }
 
-            $type = app(PricingService::class)->normalizeDiscountType($rate['member_discount_type'] ?? 'percent');
-            $value = (int) ($rate['member_discount_value'] ?? 0);
-            if ($type === 'percent') {
-                $value = min(100, max(0, $value));
-            }
-
             RoomRate::query()->updateOrCreate(
                 ['hall_id' => $hall->id, 'day_type' => $dayType],
                 [
                     'standard_price_per_hour' => (int) round(((float) $rate['standard_price_per_hour']) * 100),
-                    'member_discount_type' => $type,
-                    'member_discount_value' => $value,
                 ]
             );
         }

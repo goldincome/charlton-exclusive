@@ -21,7 +21,7 @@
                     </p>
                 </div>
                 <div style="text-align: right;">
-                    <span class="badge badge-{{ $booking->status === 'checked_in' ? 'green' : 'gold' }}">
+                    <span class="badge badge-{{ in_array($booking->status, ['confirmed', 'approved', 'completed', 'checked_in']) ? 'green' : 'gold' }}">
                         {{ ucfirst(str_replace('_', ' ', $booking->status)) }}
                     </span>
                 </div>

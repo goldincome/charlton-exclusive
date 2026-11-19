@@ -15,7 +15,7 @@
                 <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
                     <dt style="color: var(--slate-600);">Status</dt>
                     <dd style="margin: 0;">
-                        <span class="badge badge-{{ in_array($booking->status, ['confirmed', 'completed', 'checked_in']) ? 'green' : 'gold' }}">
+                        <span class="badge badge-{{ in_array($booking->status, ['confirmed', 'approved', 'completed', 'checked_in']) ? 'green' : 'gold' }}">
                             {{ ucfirst(str_replace('_', ' ', $booking->status)) }}
                         </span>
                     </dd>
@@ -28,16 +28,43 @@
                     <dt style="color: var(--slate-600);">End Time</dt>
                     <dd style="margin: 0; font-weight: 600;">{{ $booking->end_time->format('D j M Y, H:i') }}</dd>
                 </div>
+                @if ($booking->bookingable_type === \App\Models\Hall::class)
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
+                        <dt style="color: var(--slate-600);">Duration</dt>
+                        <dd style="margin: 0; font-weight: 600;">
+                            @php
+                                $durationMinutes = $booking->start_time->diffInMinutes($booking->end_time);
+                                $hours = floor($durationMinutes / 60);
+                                $mins = $durationMinutes % 60;
+                            @endphp
+                            {{ $hours > 0 ? $hours . ' ' . Str::plural('hour', $hours) : '' }}
+                            {{ $mins > 0 ? $mins . ' mins' : '' }}
+                        </dd>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
+                        <dt style="color: var(--slate-600);">Selected Times</dt>
+                        <dd style="margin: 0; text-align: right; font-weight: 600;">
+                            @php
+                                $cursor = $booking->start_time->copy();
+                                $end = $booking->end_time->copy();
+                                $slotRanges = [];
+                                while ($cursor->lt($end)) {
+                                    $slotEnd = $cursor->copy()->addHour();
+                                    if ($slotEnd->gt($end)) {
+                                        $slotEnd = $end->copy();
+                                    }
+                                    $slotRanges[] = $cursor->format('g:i A').' - '.$slotEnd->format('g:i A');
+                                    $cursor->addHour();
+                                }
+                            @endphp
+                            {{ implode(', ', $slotRanges) }}
+                        </dd>
+                    </div>
+                @endif
                 <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
                     <dt style="color: var(--slate-600);">Guests</dt>
                     <dd style="margin: 0;">{{ $booking->guests }}</dd>
                 </div>
-                @if ($booking->price_locked)
-                    <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #E0D5B8;">
-                        <dt style="color: var(--slate-600);">Price</dt>
-                        <dd style="margin: 0; font-weight: 600;">£{{ number_format($booking->price_locked / 100, 2) }}</dd>
-                    </div>
-                @endif
                 <div style="display: flex; justify-content: space-between;">
                     <dt style="color: var(--slate-600);">Created At</dt>
                     <dd style="margin: 0;">{{ $booking->created_at->format('j M Y, H:i') }}</dd>
@@ -76,6 +103,40 @@
     </div>
 
     <aside>
+        @php
+            $final = $booking->final_amount ?? $booking->price_locked ?? 0;
+            $original = $booking->original_amount ?? $final;
+            $discount = $booking->discount_amount ?? 0;
+        @endphp
+        @if ($final > 0 || $original > 0)
+            <div class="card-light" style="margin-bottom: 20px;">
+                <h3 style="font-size: 18px; margin-bottom: 12px;">Price Breakdown</h3>
+                @if ($original > 0 && $original !== $final)
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; color: var(--slate-600);">
+                        <span>Subtotal</span>
+                        <span>£{{ number_format($original / 100, 2) }}</span>
+                    </div>
+                @endif
+                @if ($discount > 0)
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; color: var(--slate-600);">
+                        <span>
+                            Member discount
+                            @if ($booking->discount_type === 'percent')
+                                ({{ (int) $booking->discount_value }}%)
+                            @endif
+                        </span>
+                        <span>-£{{ number_format($discount / 100, 2) }}</span>
+                    </div>
+                @endif
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; padding-top: 8px; border-top: 1px solid #E0D5B8;">
+                    <span style="font-weight: 600;">Total Price</span>
+                    <span style="font-size: 24px; font-family: var(--font-display); color: var(--claret-700);">
+                        £{{ number_format($final / 100, 2) }}
+                    </span>
+                </div>
+            </div>
+        @endif
+
         <div class="card-light" style="background: var(--navy-900); color: var(--ivory-100); margin-bottom: 20px;">
             <h2 style="font-size: 22px; margin-bottom: 16px;">Actions</h2>
 

@@ -21,7 +21,7 @@
                     </p>
                 </div>
                 <div style="text-align: right;">
-                    <span class="badge badge-{{ $booking->status === 'confirmed' ? 'green' : ($booking->status === 'requested' ? 'gold' : 'neutral') }}">
+                    <span class="badge badge-{{ in_array($booking->status, ['confirmed', 'approved', 'completed', 'checked_in']) ? 'green' : ($booking->status === 'requested' ? 'gold' : 'neutral') }}">
                         {{ ucfirst($booking->status) }}
                     </span>
                     @if ($booking->price_locked)

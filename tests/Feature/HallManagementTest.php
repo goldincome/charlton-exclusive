@@ -36,8 +36,6 @@ class HallManagementTest extends TestCase
             'ratings' => [
                 'Mon' => [
                     'standard_price_per_hour' => '60.00',
-                    'member_discount_type' => 'percent',
-                    'member_discount_value' => '20',
                 ],
             ],
         ]);

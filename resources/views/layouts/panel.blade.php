@@ -23,7 +23,6 @@
                 <!-- Account nav -->
                 <a href="{{ route('account.dashboard') }}" class="panel-nav-link {{ request()->routeIs('account.dashboard') ? 'active' : '' }}">Dashboard</a>
                 <a href="{{ route('account.bookings.index') }}" class="panel-nav-link {{ request()->routeIs('account.bookings.*') ? 'active' : '' }}">My bookings</a>
-                <a href="{{ route('account.services.index') }}" class="panel-nav-link {{ request()->routeIs('account.services.*') ? 'active' : '' }}">Section services</a>
                 <a href="{{ route('account.cart.index') }}" class="panel-nav-link {{ request()->routeIs('account.cart.*') ? 'active' : '' }}">Cart</a>
                 <a href="{{ route('account.food-orders.index') }}" class="panel-nav-link {{ request()->routeIs('account.food-orders.*') ? 'active' : '' }}">Food orders</a>
                 <a href="{{ route('account.invoices.index') }}" class="panel-nav-link {{ request()->routeIs('account.invoices.*') ? 'active' : '' }}">Invoices</a>
@@ -55,7 +54,6 @@
                 <a href="{{ route('admin.halls.index') }}" class="panel-nav-link {{ request()->routeIs('admin.halls.*') ? 'active' : '' }}">Meeting rooms</a>
                 <a href="{{ route('admin.events.index') }}" class="panel-nav-link {{ request()->routeIs('admin.events.*') ? 'active' : '' }}">Events</a>
                 <a href="{{ route('admin.sections.index') }}" class="panel-nav-link {{ request()->routeIs('admin.sections.*') ? 'active' : '' }}">Sections</a>
-                <a href="{{ route('admin.bookable-items.index') }}" class="panel-nav-link {{ request()->routeIs('admin.bookable-items.*') ? 'active' : '' }}">Bookable items</a>
                 <a href="{{ route('admin.menu.index') }}" class="panel-nav-link {{ request()->routeIs('admin.menu.*') ? 'active' : '' }}">Menu</a>
                 <a href="{{ route('admin.gallery.index') }}" class="panel-nav-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}">Gallery</a>
                 <a href="{{ route('admin.invoices.index') }}" class="panel-nav-link {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">Invoices</a>

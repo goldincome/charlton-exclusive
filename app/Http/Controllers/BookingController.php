@@ -89,11 +89,6 @@ class BookingController extends Controller
             ->with('status', 'Your request has been sent to the club. We will confirm within 72 hours.');
     }
 
-    public function createEvent(Event $event): View
-    {
-        return view('public.booking.event', ['event' => $event]);
-    }
-
     public function storeEvent(Request $request, Event $event): RedirectResponse
     {
         $data = $request->validate([

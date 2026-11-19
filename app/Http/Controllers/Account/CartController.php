@@ -154,20 +154,16 @@ class CartController extends Controller
             ['name' => 'Meeting Rooms', 'type' => Section::TYPE_SLOT, 'access_type' => Section::ACCESS_MEMBERS_ONLY, 'active' => true]
         );
 
-        $rate = $hall->rateFor(Carbon::parse($data['start_time']));
+        $bookingDate = Carbon::parse($data['booking_date']);
+        $rate = $hall->rateFor($bookingDate);
         $unitPrice = $rate ? (int) $rate->standard_price_per_hour : 5000;
+        $standardSubtotal = (int) round($unitPrice * $calculatedHours);
 
-        $hasDiscount = false;
-        if ($user && $user->canGetMemberRates() && $rate && (int) $rate->member_discount_value > 0) {
-            $hasDiscount = true;
-        }
-
-        if ($hasDiscount) {
-            $quote = $this->pricing->hallQuote($hall, Carbon::parse($data['start_time']), Carbon::parse($data['end_time']), true);
-            $baseMin = max(1, Carbon::parse($data['start_time'])->diffInMinutes(Carbon::parse($data['end_time'])) / 60);
-            $totalPrice = (int) round(($quote['final_amount'] / $baseMin) * $calculatedHours);
+        if ($user && $user->hasMemberAccess()) {
+            $quote = $this->sectionPricing->quote($user, $meetingSection, $standardSubtotal);
+            $totalPrice = $quote['final_amount'];
         } else {
-            $totalPrice = (int) round($unitPrice * $calculatedHours);
+            $totalPrice = $standardSubtotal;
         }
 
         $bookableItem = BookableItem::query()->firstOrCreate(
@@ -219,6 +215,10 @@ class CartController extends Controller
     public function addEvent(Request $request, Event $event): RedirectResponse
     {
         $user = $request->user();
+        if ($event->members_only && (! $user || ! $user->hasMemberAccess())) {
+            return back()->with('status', 'This event is exclusive to club members.');
+        }
+
         $data = $request->validate([
             'tickets' => ['required', 'integer', 'min:1', 'max:'.$event->tickets_per_booking],
         ]);
@@ -229,11 +229,8 @@ class CartController extends Controller
         );
 
         $tickets = (int) $data['tickets'];
-        $hasDiscount = false;
-        if ($user && $user->canGetMemberRates() && (int) $event->member_discount_value > 0) {
-            $hasDiscount = true;
-        }
-        $quote = $this->pricing->eventQuote($event, $hasDiscount, $tickets);
+        $isMember = $user && $user->hasMemberAccess();
+        $quote = $this->pricing->eventQuote($event, $isMember, $tickets);
         $totalPrice = $quote['final_amount'];
 
         $bookableItem = BookableItem::query()->firstOrCreate(
@@ -296,6 +293,8 @@ class CartController extends Controller
     {
         $user = $request->user();
         if (! $user) {
+            session(['url.intended' => route('cart.index')]);
+
             return redirect()->route('login')->with('status', 'Please sign in or create an account to proceed to checkout.');
         }
 

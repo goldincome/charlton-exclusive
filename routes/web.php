@@ -89,7 +89,6 @@ Route::get('/gallery/photo/{photo}/thumb', [MediaController::class, 'thumbnail']
 
 // Booking entry points (auth required to submit, but viewing the form is public).
 Route::get('/book/room/{hall}', [BookingController::class, 'createRoom'])->name('book.room');
-Route::get('/book/event/{event}', [BookingController::class, 'createEvent'])->name('book.event');
 Route::get('/book/table/{table}', [BookingController::class, 'createTable'])->name('book.table');
 Route::get('/schedule/slots', [BookingController::class, 'getTimeSlots'])->name('time.slots');
 
@@ -110,6 +109,7 @@ Route::get('/cart/success', [CartController::class, 'success'])->name('cart.succ
 */
 
 Route::middleware(['auth', 'verified', 'noindex'])->prefix('account')->name('account.')->group(function () {
+    Route::get('/', fn () => redirect()->route('account.dashboard'));
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');

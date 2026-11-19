@@ -76,7 +76,7 @@
                                 @endforeach
                             </tbody>
                         </table>
-                        <p style="font-size: 13px; color: var(--mist-300); margin-top: 10px;">All prices include VAT at 20%. Member rates apply to annual subscribers.</p>
+                        <p style="font-size: 13px; color: var(--mist-300); margin-top: 10px;">All prices include VAT at 20%. Member rates apply to annual subscribers. (<a href="{{ route('membership.index') }}" class="link-gold">Become a member</a>)</p>
                     </div>
 
                     @if ($hall->features->isNotEmpty())
@@ -119,20 +119,7 @@
                         <p style="font-size: 16px; color: var(--mist-300); line-height: 1.6; margin: 0;">{{ $hall->description }}</p>
                     </div>
 
-                    <dl style="display: grid; gap: 12px; margin: 0; padding-block: 16px; border-block: 1px solid rgba(201,169,97,0.2); font-size: 15px;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <dt style="color: var(--mist-300);">Capacity</dt>
-                            <dd style="margin: 0; color: var(--ivory-100); font-weight: 500;">Up to {{ $hall->capacity }} guests{{ $hall->capacity_seated ? ' · '.$hall->capacity_seated.' seated' : '' }}</dd>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <dt style="color: var(--mist-300);">Minimum booking</dt>
-                            <dd style="margin: 0; color: var(--ivory-100); font-weight: 500;">{{ $hall->min_hours }} hours</dd>
-                        </div>
-                        <div style="display: flex; justify-content: space-between;">
-                            <dt style="color: var(--mist-300);">Changeover buffer</dt>
-                            <dd style="margin: 0; color: var(--ivory-100); font-weight: 500;">{{ $hall->buffer_minutes }} minutes</dd>
-                        </div>
-                    </dl>
+                   
 
                     @if (isset($memberRate) && $memberRate)
                         <div style="background: rgba(201,169,97,0.08); padding: 12px 16px; border-radius: 4px; border-left: 3px solid var(--gold-500);">
@@ -155,18 +142,7 @@
                             </div>
                         @endif
 
-                        @guest
-                            <div role="alert" style="border: 1px solid #C9A961; background: rgba(201,169,97,.12); color: var(--champagne-200); padding: 12px 14px; border-radius: 4px; font-size: 13px;">
-                                <p style="margin: 0 0 6px;"><strong>Sign in required to book</strong></p>
-                                <p style="margin: 0 0 10px;">Select your times below, then sign in to add to cart.</p>
-                                <div style="display: flex; gap: 8px;">
-                                    <a href="{{ route('login') }}" class="btn btn-gold btn-sm">Sign in</a>
-                                    <a href="{{ route('register') }}" class="btn btn-line btn-sm">Register</a>
-                                </div>
-                            </div>
-                        @endguest
-
-                        <form method="POST" action="{{ route('account.cart.add.room', $hall) }}" style="display: grid; gap: 16px;">
+                        <form method="POST" action="{{ route('cart.add.room', $hall) }}" style="display: grid; gap: 16px;">
                             @csrf
                             <input type="hidden" id="start_time" name="start_time" value="{{ old('start_time') }}">
                             <input type="hidden" id="end_time" name="end_time" value="{{ old('end_time') }}">
@@ -211,6 +187,20 @@
                             <button type="submit" class="btn btn-gold" style="width: 100%; padding-block: 14px; font-weight: 600; letter-spacing: 0.05em;">Add to Cart</button>
                         </form>
                     </div>
+                    <dl style="display: grid; gap: 12px; margin: 0; padding-block: 16px; border-block: 1px solid rgba(201,169,97,0.2); font-size: 15px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <dt style="color: var(--mist-300);">Capacity</dt>
+                            <dd style="margin: 0; color: var(--ivory-100); font-weight: 500;">Up to {{ $hall->capacity }} guests{{ $hall->capacity_seated ? ' · '.$hall->capacity_seated.' seated' : '' }}</dd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <dt style="color: var(--mist-300);">Minimum booking</dt>
+                            <dd style="margin: 0; color: var(--ivory-100); font-weight: 500;">{{ $hall->min_hours }} hours</dd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <dt style="color: var(--mist-300);">Changeover buffer</dt>
+                            <dd style="margin: 0; color: var(--ivory-100); font-weight: 500;">{{ $hall->buffer_minutes }} minutes</dd>
+                        </div>
+                    </dl>
                 </div>
             </div>
         </div>
@@ -265,6 +255,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (datePicker) {
         const today = new Date().toISOString().split('T')[0];
         datePicker.setAttribute('min', today);
+        if (!datePicker.value) {
+            datePicker.value = today;
+            fetchSlots(today);
+        }
+
+        datePicker.addEventListener('click', function() {
+            if (typeof this.showPicker === 'function') {
+                try {
+                    this.showPicker();
+                } catch (e) {}
+            }
+        });
 
         datePicker.addEventListener('change', function() {
             const selectedDate = this.value;

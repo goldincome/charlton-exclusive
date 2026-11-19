@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Services\PricingService;
+use App\Services\StorageService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,12 @@ class EventController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        Event::query()->create($this->validated($request));
+        $data = $this->validated($request);
+        if ($request->hasFile('image')) {
+            $stored = app(StorageService::class)->storeImage($request->file('image'), 'public/events');
+            $data['og_image'] = $stored['path'];
+        }
+        Event::query()->create($data);
 
         return redirect()->route('admin.events.index')->with('status', 'Event created.');
     }
@@ -39,7 +45,15 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event): RedirectResponse
     {
-        $event->update($this->validated($request, $event));
+        $data = $this->validated($request, $event);
+        if ($request->hasFile('image')) {
+            if ($event->og_image) {
+                app(StorageService::class)->delete($event->og_image);
+            }
+            $stored = app(StorageService::class)->storeImage($request->file('image'), 'public/events');
+            $data['og_image'] = $stored['path'];
+        }
+        $event->update($data);
 
         return back()->with('status', 'Event updated.');
     }
@@ -53,6 +67,9 @@ class EventController extends Controller
 
     public function destroy(Event $event): RedirectResponse
     {
+        if ($event->og_image) {
+            app(StorageService::class)->delete($event->og_image);
+        }
         $event->delete();
 
         return redirect()->route('admin.events.index')->with('status', 'Event deleted.');
@@ -76,7 +93,10 @@ class EventController extends Controller
             'seo_description' => ['nullable', 'string', 'max:190'],
             'members_only' => ['boolean'],
             'active' => ['boolean'],
+            'image' => ['nullable', 'image', 'max:10240'],
         ]);
+
+        unset($data['image']);
 
         $data['member_discount_type'] = app(PricingService::class)->normalizeDiscountType($data['member_discount_type']);
         if ($data['member_discount_type'] === 'percent') {
@@ -85,7 +105,7 @@ class EventController extends Controller
             $data['member_discount_value'] = (int) $data['member_discount_value'];
         }
 
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $data['slug'] = ! empty($data['slug']) ? Str::slug($data['slug']) : Str::slug($data['name']);
         $data['price_per_ticket'] = (int) round(((float) $data['price_per_ticket']) * 100);
         $data['members_only'] = $request->boolean('members_only');
         $data['active'] = $request->boolean('active', true);

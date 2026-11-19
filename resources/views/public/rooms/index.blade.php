@@ -2,14 +2,24 @@
 
 @section('content')
 <section style="padding-block: clamp(56px, 7vw, 96px);">
-    <div class="container-x">
-        <p class="eyebrow" style="color: var(--gold-500);">Meeting rooms</p>
-        <h1 style="font-size: clamp(38px, 5vw, 60px); margin: 18px 0 22px; max-width: 780px;" class="text-balance">
-            Rooms made for <em style="color: var(--champagne-200);">serious conversation</em>.
-        </h1>
-        <p style="font-size: 19px; color: var(--mist-300); max-width: 640px;">
-            Minimum three hours, in thirty-minute increments. All room prices include VAT at 20%. Members receive their published discount.
-        </p>
+    <div class="container-x" style="display: flex; flex-wrap: wrap; gap: 48px; align-items: center;">
+        <div style="flex: 1 1 480px;">
+            <p class="eyebrow" style="color: var(--gold-500);">Meeting rooms</p>
+            <h1 style="font-size: clamp(38px, 5vw, 60px); margin: 18px 0 22px; max-width: 780px;" class="text-balance">
+                Rooms made for <em style="color: var(--champagne-200);">serious conversation</em>.
+            </h1>
+            <p style="font-size: 19px; color: var(--mist-300); max-width: 640px;">
+                Minimum three hours, in thirty-minute increments. All room prices include VAT at 20%. Members receive their published discount.
+            </p>
+        </div>
+        <div style="flex: 1 1 420px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); background: #1B2A4A;">
+            @php $heroHall = $halls->first()?->heroImage(); @endphp
+            @if ($heroHall)
+                <img src="{{ route('media.public', $heroHall->path) }}" alt="Meeting rooms" width="800" height="600" style="width: 100%; height: 360px; object-fit: cover; display: block;">
+            @else
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80" alt="Executive meeting room" width="800" height="600" style="width: 100%; height: 360px; object-fit: cover; display: block;">
+            @endif
+        </div>
     </div>
 </section>
 
@@ -49,8 +59,8 @@
                     @php $weekday = $hall->rates->firstWhere('day_type', 'Mon'); @endphp
                     @if ($weekday)
                         <p style="font-size: 17px; margin-bottom: 20px;">
-                            <strong>£{{ number_format($weekday->standard_price_per_hour / 100, 0) }}</strong> / hour standard ·
-                            <strong style="color: var(--claret-700);">£{{ number_format($weekday->memberPricePerHour() / 100, 0) }}</strong> / hour member
+                            <strong>£{{ number_format($weekday->standard_price_per_hour / 100, 0) }}</strong>/hour or
+                            <strong style="color: var(--claret-700);">£{{ number_format($weekday->memberPricePerHour() / 100, 0) }}</strong>/hour for members (<a href="{{ route('membership.index') }}" class="link-claret">Become a member</a>)
                         </p>
                     @else
                         <p style="font-size: 15px; color: var(--slate-600); margin-bottom: 20px;">Rates for this room are being confirmed.</p>
@@ -58,7 +68,7 @@
 
                     <div style="display: flex; flex-wrap: wrap; gap: 14px;">
                         <a href="{{ route('rooms.show', $hall->slug) }}" class="btn btn-navy btn-sm">View room</a>
-                        <a href="{{ route('book.room', $hall) }}" class="btn btn-line-dark btn-sm">Request a booking</a>
+                        <a href="{{ route('rooms.show', $hall->slug) }}" class="btn btn-line-dark btn-sm">Request a booking</a>
                     </div>
                 </div>
             </article>

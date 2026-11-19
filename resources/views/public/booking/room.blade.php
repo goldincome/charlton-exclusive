@@ -11,14 +11,41 @@
         </nav>
 
         <div style="display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start;">
-            <div style="flex: 1 1 460px;">
-                <p class="eyebrow" style="color: var(--gold-500);">Book {{ $hall->name }}</p>
-                <h1 style="font-size: clamp(34px, 4.4vw, 52px); margin: 14px 0 20px;">Request a booking</h1>
-                <p style="font-size: 17px; color: var(--mist-300); margin-bottom: 28px;">
-                    Choose your date, time slots and number of guests. The club will confirm your request within 72 hours. No payment is taken until the booking is approved.
-                </p>
+            <div style="flex: 1 1 460px; display: grid; gap: 28px;">
+                <div>
+                    <p class="eyebrow" style="color: var(--gold-500);">Book {{ $hall->name }}</p>
+                    <h1 style="font-size: clamp(34px, 4.4vw, 52px); margin: 14px 0 16px;">Request a booking</h1>
+                    <p style="font-size: 17px; color: var(--mist-300); margin-bottom: 20px;">
+                        {{ $hall->description }}
+                    </p>
+                </div>
 
-                <div class="card-dark" style="margin-bottom: 28px;">
+                <div style="border-radius: 6px; overflow: hidden; background: #E9E1CB; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    @if ($hall->heroImage())
+                        <img id="main-hero-img" src="{{ route('media.public', $hall->heroImage()->path) }}" alt="{{ $hall->heroImage()->alt_text ?: $hall->name }}"
+                             width="800" height="600" style="width: 100%; height: 280px; object-fit: cover; display: block;">
+                    @else
+                        <div class="placeholder" style="height: 280px; background: #E9E1CB; color: var(--slate-600); border: 0; display: flex; align-items: center; justify-content: center;">[Photograph: {{ $hall->name }}]</div>
+                    @endif
+                </div>
+
+                @if ($hall->images->isNotEmpty())
+                    <div>
+                        <h3 style="font-size: 15px; color: var(--champagne-200); margin-bottom: 10px;">Room Gallery (Click thumbnail to view)</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px;">
+                            @foreach ($hall->images as $index => $image)
+                                <button type="button" onclick="swapHeroImage('{{ route('media.public', $image->path) }}', '{{ addslashes($image->alt_text ?: $hall->name) }}', this)"
+                                        style="border-radius: 4px; overflow: hidden; display: block; border: 2px solid {{ $index === 0 ? 'var(--gold-500)' : 'rgba(201,169,97,0.3)' }}; background: transparent; padding: 0; cursor: pointer; transition: border-color 0.2s;"
+                                        class="room-thumbnail-btn">
+                                    <img src="{{ route('media.public', $image->path) }}" alt="{{ $image->alt_text ?: $hall->name }}" width="300" height="200" loading="lazy"
+                                         style="width: 100%; height: 50px; object-fit: cover; display: block;">
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <div class="card-dark">
                     <dl style="display: grid; gap: 10px; font-size: 15px; margin: 0;">
                         <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(201,169,97,.25); padding-bottom: 8px;">
                             <dt style="color: var(--mist-300);">Capacity</dt>
@@ -36,15 +63,15 @@
                 </div>
 
                 @if ($memberRate)
-                    <p style="font-size: 15px; color: var(--mist-300); margin-bottom: 20px;">
+                    <p style="font-size: 15px; color: var(--mist-300); margin: 0;">
                         Your member rate: <strong style="color: var(--champagne-200);">£{{ number_format($memberRate / 100, 0) }}</strong> per hour
                     </p>
                 @endif
 
-                <ul style="margin: 0 0 28px 1.1rem; padding: 0; color: var(--mist-300); font-size: 15px;">
-                    <li style="margin-bottom: 8px;">Booking slot opens 30 minutes before your start time</li>
-                    <li style="margin-bottom: 8px;">Full refund if cancelled 7+ days before start</li>
-                    <li style="margin-bottom: 8px;">50% refund if cancelled 48 hours to 7 days before</li>
+                <ul style="margin: 0; padding: 0 0 0 1.1rem; color: var(--mist-300); font-size: 15px;">
+                    <li style="margin-bottom: 6px;">Booking slot opens 30 minutes before your start time</li>
+                    <li style="margin-bottom: 6px;">Full refund if cancelled 7+ days before start</li>
+                    <li style="margin-bottom: 6px;">50% refund if cancelled 48 hours to 7 days before</li>
                     <li>No refund if cancelled within 48 hours</li>
                 </ul>
             </div>
@@ -128,6 +155,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (datePicker) {
         const today = new Date().toISOString().split('T')[0];
         datePicker.setAttribute('min', today);
+        if (!datePicker.value) {
+            datePicker.value = today;
+            fetchSlots(today);
+        }
 
         datePicker.addEventListener('click', function() {
             if (typeof this.showPicker === 'function') {
@@ -243,5 +274,17 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${hours.padStart(2, '0')}:${minutes}:00`;
     }
 });
+
+function swapHeroImage(src, alt, btn) {
+    const mainImg = document.getElementById('main-hero-img');
+    if (mainImg) {
+        mainImg.src = src;
+        mainImg.alt = alt;
+    }
+    document.querySelectorAll('.room-thumbnail-btn').forEach(b => {
+        b.style.borderColor = 'rgba(201,169,97,0.3)';
+    });
+    btn.style.borderColor = 'var(--gold-500)';
+}
 </script>
 @endsection

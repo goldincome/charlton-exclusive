@@ -16,8 +16,12 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
             @forelse ($upcoming as $event)
                 <article class="card-light" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-                    <div style="height: 180px; background: #E9E1CB; display: flex; align-items: center; justify-content: center; color: var(--slate-600);">
-                        [Event image]
+                    <div style="height: 180px; background: #E9E1CB; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--slate-600);">
+                        @if ($event->og_image)
+                            <img src="{{ route('media.public', $event->og_image) }}" alt="{{ $event->name }}" width="400" height="180" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                        @else
+                            [Event image]
+                        @endif
                     </div>
                     <div style="padding: 24px; display: flex; flex-direction: column; flex: 1;">
                         <p class="eyebrow" style="font-size: 12px; color: var(--claret-700);">

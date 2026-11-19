@@ -13,7 +13,7 @@
     </div>
 @endif
 
-<form method="POST" action="{{ $event->exists ? route('admin.events.update', $event) : route('admin.events.store') }}" style="display: grid; gap: 24px;">
+<form method="POST" action="{{ $event->exists ? route('admin.events.update', $event) : route('admin.events.store') }}" enctype="multipart/form-data" style="display: grid; gap: 24px;">
     @csrf
     @if ($event->exists) @method('PUT') @endif
 
@@ -32,6 +32,16 @@
         <div>
             <label class="field-label" for="description">Description</label>
             <textarea class="field-light" id="description" name="description" rows="4">{{ old('description', $event->description) }}</textarea>
+        </div>
+
+        <div>
+            <label class="field-label" for="image">Event Image <span style="font-weight: 400; color: var(--slate-600);">(optional)</span></label>
+            @if ($event->og_image)
+                <div style="margin-bottom: 12px;">
+                    <img src="{{ route('media.public', $event->og_image) }}" alt="{{ $event->name }}" width="200" height="120" style="object-fit: cover; border-radius: 4px; display: block; border: 1px solid var(--slate-300);">
+                </div>
+            @endif
+            <input class="field-light" id="image" name="image" type="file" accept="image/*">
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">

@@ -104,7 +104,7 @@
     <!-- Room Rates per Day Type -->
     <div class="card-light" style="display: grid; gap: 16px;">
         <h2 style="font-size: 22px; margin: 0 0 4px;">Hourly Rates by Day Type</h2>
-        <p style="font-size: 14px; color: var(--slate-600); margin: 0 0 12px;">Enter standard hourly price in pounds (e.g. 45.00 for £45.00/hr) and member discount settings.</p>
+        <p style="font-size: 14px; color: var(--slate-600); margin: 0 0 12px;">Enter standard hourly price in pounds (e.g. 45.00 for £45.00/hr). Member discounts are managed globally under sections.</p>
 
         @php
             $dayTypes = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -115,23 +115,11 @@
                     $rate = $hall->rates?->firstWhere('day_type', $dt);
                     $priceVal = $rate ? number_format($rate->standard_price_per_hour / 100, 2, '.', '') : '';
                 @endphp
-                <div style="display: grid; grid-template-columns: 140px 1fr 1fr 1fr; gap: 12px; align-items: center; background: #fff; padding: 12px; border: 1px solid #E0D5B8; border-radius: 4px;">
+                <div style="display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: center; background: #fff; padding: 12px; border: 1px solid #E0D5B8; border-radius: 4px;">
                     <strong>{{ $dt }}</strong>
                     <div>
                         <label style="font-size: 12px; display: block; color: var(--slate-600);">Std Price (£/hr)</label>
                         <input class="field-light" name="ratings[{{ $dt }}][standard_price_per_hour]" type="number" step="0.01" min="0" value="{{ old('ratings.'.$dt.'.standard_price_per_hour', $priceVal) }}" placeholder="e.g. 45.00">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; display: block; color: var(--slate-600);">Discount Type</label>
-                        <select class="field-light" name="ratings[{{ $dt }}][member_discount_type]">
-                            <option value="percent" @selected(old('ratings.'.$dt.'.member_discount_type', $rate?->member_discount_type) === 'percent')>Percentage</option>
-                            <option value="fixed" @selected(old('ratings.'.$dt.'.member_discount_type', $rate?->member_discount_type) === 'fixed')>Fixed (£)</option>
-                            <option value="flat" @selected(old('ratings.'.$dt.'.member_discount_type', $rate?->member_discount_type) === 'flat')>Flat rate</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; display: block; color: var(--slate-600);">Discount Value</label>
-                        <input class="field-light" name="ratings[{{ $dt }}][member_discount_value]" type="number" min="0" value="{{ old('ratings.'.$dt.'.member_discount_value', $rate?->member_discount_value ?? 20) }}">
                     </div>
                 </div>
             @endforeach

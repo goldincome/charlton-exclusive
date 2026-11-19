@@ -12,7 +12,12 @@ class RegisterResponse implements RegisterResponseContract
             return response()->json(['two_factor' => false]);
         }
 
-        return redirect()->route('account.applications.start')
+        if (session()->has('cart_items') && ! empty(session('cart_items'))) {
+            return redirect()->intended(route('cart.index'))
+                ->with('status', 'Your account is ready. Review your cart to complete checkout.');
+        }
+
+        return redirect()->intended(route('account.applications.start'))
             ->with('status', 'Your account is ready. Complete your membership application to join the club.');
     }
 }

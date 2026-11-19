@@ -45,8 +45,14 @@
 
         <div style="display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start;">
             <div style="flex: 1 1 500px;">
-                <div style="height: 380px; border-radius: 4px; background: var(--navy-800); border: 1px solid rgba(201,169,97,.3); display: flex; align-items: center; justify-content: center; color: var(--mist-300);">
-                    [Event image]
+                <div style="border-radius: 4px; overflow: hidden; background: var(--navy-800); border: 1px solid rgba(201,169,97,.3);">
+                    @if ($event->og_image)
+                        <img src="{{ route('media.public', $event->og_image) }}" alt="{{ $event->name }}" width="800" height="500" style="width: 100%; height: 380px; object-fit: cover; display: block;">
+                    @else
+                        <div style="height: 380px; display: flex; align-items: center; justify-content: center; color: var(--mist-300);">
+                            [Event image]
+                        </div>
+                    @endif
                 </div>
 
                 <div class="prose-club" style="margin-top: 32px; color: var(--ivory-100);">
@@ -88,9 +94,40 @@
                         <p style="margin-top: 16px; color: var(--mist-300);">This event has been cancelled. Ticket holders will be refunded in full.</p>
                     @elseif ($event->starts_at->isPast())
                         <p class="badge badge-neutral">Past event</p>
+                    @elseif ($event->members_only && (auth()->guest() || ! auth()->user()->hasMemberAccess()))
+                        <div style="background: rgba(201,169,97,.12); border: 1px solid rgba(201,169,97,.3); padding: 16px; border-radius: 4px; text-align: center; margin-top: 12px;">
+                            <p style="color: var(--champagne-200); font-weight: 600; margin: 0 0 6px;">Members-Only Event</p>
+                            <p style="color: var(--mist-300); font-size: 14px; margin: 0 0 16px;">This event is exclusive to club members. Please log in or register to continue.</p>
+                            @guest
+                                <div style="display: flex; gap: 10px; justify-content: center;">
+                                    <a href="{{ route('login') }}" class="btn btn-gold btn-sm">Sign in</a>
+                                    <a href="{{ route('register') }}" class="btn btn-line btn-sm">Register</a>
+                                </div>
+                            @else
+                                <a href="{{ route('membership.index') }}" class="btn btn-gold btn-sm">View Membership</a>
+                            @endguest
+                        </div>
                     @else
-                        <a href="{{ route('book.event', $event) }}" class="btn btn-gold" style="width: 100%;">Request a place</a>
-                        <p style="font-size: 14px; color: var(--mist-300); margin-top: 12px;">The club confirms your place by email.</p>
+                        @if ($errors->any())
+                            <div role="alert" style="border: 1px solid #F0A7B2; background: rgba(158,43,60,.16); color: #F0A7B2; padding: 10px 12px; border-radius: 4px; margin-bottom: 14px; font-size: 13px;">
+                                @foreach ($errors->all() as $error)<div>{{ $error }}</div>@endforeach
+                            </div>
+                        @endif
+
+                        <form method="POST" action="{{ route('cart.add.event', $event) }}" style="display: grid; gap: 14px;">
+                            @csrf
+                            @guest
+                                <div style="font-size: 13px; color: var(--champagne-200); background: rgba(201,169,97,.1); padding: 8px 10px; border-radius: 4px; border: 1px solid rgba(201,169,97,.3);">
+                                    Add to cart as guest. Sign in at checkout.
+                                </div>
+                            @endguest
+                            <div>
+                                <label class="field-label" for="tickets" style="color: var(--ivory-100);">Number of tickets</label>
+                                <input class="field-dark" id="tickets" name="tickets" type="number" min="1" max="{{ $event->tickets_per_booking }}" value="{{ old('tickets', 1) }}" required>
+                            </div>
+                            <button type="submit" class="btn btn-gold" style="width: 100%;">Add to cart</button>
+                            <p style="font-size: 13px; color: var(--mist-300); text-align: center; margin: 0;">Secure checkout via Stripe.</p>
+                        </form>
                     @endif
                 </div>
             </aside>
