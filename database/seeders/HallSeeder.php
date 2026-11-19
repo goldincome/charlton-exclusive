@@ -64,16 +64,16 @@ class HallSeeder extends Seeder
             ], $hour);
         }
 
-        // Add rates (Mon-Thu £120/h, Fri £90/h, Sat-Sun £150/h, 20% member discount)
+        // Add rates (Mon-Thu £120/h, Fri £90/h, Sat-Sun £150/h)
         $rates = [
-            ['day_type' => 'Mon', 'standard_price_per_hour' => 12000, 'member_discount_type' => 'percent', 'member_discount_value' => 20.00],
-            ['day_type' => 'Tue', 'standard_price_per_hour' => 12000, 'member_discount_type' => 'percent', 'member_discount_value' => 20.00],
-            ['day_type' => 'Wed', 'standard_price_per_hour' => 12000, 'member_discount_type' => 'percent', 'member_discount_value' => 20.00],
-            ['day_type' => 'Thu', 'standard_price_per_hour' => 12000, 'member_discount_type' => 'percent', 'member_discount_value' => 20.00],
-            ['day_type' => 'Fri', 'standard_price_per_hour' => 9000, 'member_discount_type' => 'percent', 'member_discount_value' => 20.00],
-            ['day_type' => 'Sat', 'standard_price_per_hour' => 15000, 'member_discount_type' => 'percent', 'member_discount_value' => 20.00],
-            ['day_type' => 'Sun', 'standard_price_per_hour' => 15000, 'member_discount_type' => 'percent', 'member_discount_value' => 20.00],
-            ['day_type' => 'BankHoliday', 'standard_price_per_hour' => 18000, 'member_discount_type' => 'percent', 'member_discount_value' => 15.00],
+            ['day_type' => 'Mon', 'standard_price_per_hour' => 12000],
+            ['day_type' => 'Tue', 'standard_price_per_hour' => 12000],
+            ['day_type' => 'Wed', 'standard_price_per_hour' => 12000],
+            ['day_type' => 'Thu', 'standard_price_per_hour' => 12000],
+            ['day_type' => 'Fri', 'standard_price_per_hour' => 9000],
+            ['day_type' => 'Sat', 'standard_price_per_hour' => 15000],
+            ['day_type' => 'Sun', 'standard_price_per_hour' => 15000],
+            ['day_type' => 'BankHoliday', 'standard_price_per_hour' => 18000],
         ];
 
         foreach ($rates as $rate) {
